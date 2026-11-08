@@ -63,3 +63,11 @@ Les mutations ne sont pas toutes réversibles : en particulier, faire avancer un
 - La création d'un élève ne crée pas automatiquement de dossier ; aucun endpoint HTTP de création de dossier n'est exposé.
 
 La collection inclut les routes existantes, mais les opérations touchant les tables ou statuts signalés ci-dessus peuvent échouer jusqu'à la correction du schéma et du modèle.
+
+---Les variables environnements-----------
+SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/samatur_db
+SPRING_DATASOURCE_USERNAME=postgres
+SPRING_DATASOURCE_PASSWORD=admin
+SAMATUR_JWT_SECRET=9DoMnIzVrUCD+OVB0G8YZfNRiP9DRT3DB2HtY/Vh4FI=
+SAMATUR_JWT_EXPIRATION=86400000
+---
