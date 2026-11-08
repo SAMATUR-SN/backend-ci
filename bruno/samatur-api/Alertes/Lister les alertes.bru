@@ -1,0 +1,14 @@
+meta {
+  name: Lister les alertes actives
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/alertes
+  body: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}

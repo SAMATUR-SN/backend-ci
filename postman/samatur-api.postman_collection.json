@@ -1,0 +1,219 @@
+{
+  "info": {
+    "_postman_id": "98ef2aae-886a-4729-acbc-6ef7d55def40",
+    "name": "SamaTur API",
+    "description": "Requêtes pour les routes actuellement exposées. Renseigner l'environnement SamaTur - local, puis lancer Connexion pour stocker le JWT.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Authentification",
+      "item": [
+        {
+          "name": "Connexion",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Connexion reussie et JWT recu', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body).to.have.property('token').that.is.a('string').and.not.empty;",
+                  "  pm.collectionVariables.set('token', body.token);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifiant\": \"{{identifiant}}\",\n  \"motDePasse\": \"{{motDePasse}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/api/auth/connexion"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Eleves",
+      "item": [
+        {
+          "name": "Lister les eleves",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/eleves"
+          }
+        },
+        {
+          "name": "Obtenir un eleve",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/eleves/{{eleveId}}"
+          }
+        },
+        {
+          "name": "Creer un eleve",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"numeroIne\": null,\n  \"sexe\": \"M\",\n  \"nom\": \"Exemple\",\n  \"prenom\": \"Eleve\",\n  \"dateNaissance\": \"2014-01-15\",\n  \"dateNaissancePresumee\": false,\n  \"classe\": \"CM2\",\n  \"ecole\": { \"id\": 1 },\n  \"communeNaissance\": { \"id\": 1 },\n  \"nomPere\": \"Parent exemple\",\n  \"professionPere\": \"Agriculteur\",\n  \"nomMere\": \"Parent exemple\",\n  \"professionMere\": \"Commercante\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/api/eleves"
+          }
+        },
+        {
+          "name": "Modifier un eleve",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"numeroIne\": null,\n  \"sexe\": \"M\",\n  \"nom\": \"Exemple modifie\",\n  \"prenom\": \"Eleve\",\n  \"dateNaissance\": \"2014-01-15\",\n  \"dateNaissancePresumee\": false,\n  \"classe\": \"CM2\",\n  \"ecole\": { \"id\": 1 },\n  \"communeNaissance\": { \"id\": 1 },\n  \"nomPere\": \"Parent exemple\",\n  \"professionPere\": \"Agriculteur\",\n  \"nomMere\": \"Parent exemple\",\n  \"professionMere\": \"Commercante\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/api/eleves/{{eleveId}}"
+          }
+        },
+        {
+          "name": "Supprimer un eleve",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/eleves/{{eleveId}}"
+          }
+        },
+        {
+          "name": "Importer des eleves CSV",
+          "request": {
+            "method": "POST",
+            "description": "Ajouter un fichier dans le champ file apres import de la collection. Le CSV utilise le point-virgule comme separateur.",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": ""
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/eleves/import"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Dossiers",
+      "item": [
+        {
+          "name": "Lister les dossiers",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/dossiers"
+          }
+        },
+        {
+          "name": "Obtenir un dossier",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/dossiers/{{dossierId}}"
+          }
+        },
+        {
+          "name": "Avancer un dossier",
+          "request": {
+            "method": "POST",
+            "description": "Operation avec effet de bord : fait avancer le dossier d'une etape et ecrit son historique.",
+            "url": "{{baseUrl}}/api/dossiers/{{dossierId}}/avancer"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Alertes",
+      "item": [
+        {
+          "name": "Lister les alertes actives",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/alertes"
+          }
+        },
+        {
+          "name": "Verifier les retards",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/alertes/verifier"
+          }
+        },
+        {
+          "name": "Resoudre une alerte",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/api/alertes/{{alerteId}}/resoudre"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Statistiques",
+      "item": [
+        {
+          "name": "Dashboard",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/statistiques/dashboard"
+          }
+        }
+      ]
+    }
+  ]
+}

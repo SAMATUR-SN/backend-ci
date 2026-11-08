@@ -1,0 +1,22 @@
+meta {
+  name: Connexion
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/auth/connexion
+  body: json
+  auth: none
+}
+
+body:json {
+  "identifiant": "{{identifiant}}",
+  "motDePasse": "{{motDePasse}}"
+}
+
+script:post-response {
+  if (res.status === 200 && res.body && res.body.token) {
+    bru.setEnvVar("token", res.body.token);
+  }
+}
