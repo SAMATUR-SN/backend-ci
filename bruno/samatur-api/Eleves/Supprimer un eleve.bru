@@ -1,0 +1,14 @@
+meta {
+  name: Supprimer un eleve
+  type: http
+  seq: 5
+}
+
+delete {
+  url: {{baseUrl}}/api/eleves/{{eleveId}}
+  body: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}

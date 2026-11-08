@@ -1,0 +1,14 @@
+meta {
+  name: Avancer un dossier
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/dossiers/{{dossierId}}/avancer
+  body: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}

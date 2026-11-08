@@ -1,0 +1,14 @@
+meta {
+  name: Lister les dossiers
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/dossiers
+  body: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}

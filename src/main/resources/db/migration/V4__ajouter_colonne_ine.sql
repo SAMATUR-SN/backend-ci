@@ -1,0 +1,1 @@
+ALTER TABLE eleve ADD COLUMN numero_ine VARCHAR(50) UNIQUE;
