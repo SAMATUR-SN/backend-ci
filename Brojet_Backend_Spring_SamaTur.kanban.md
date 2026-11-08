@@ -8,20 +8,6 @@
 
 ## In Progress
 
-### Backends
-
-#### Conteneurisation
-<!-- id: task-1794095569939-79 -->
-Rédiger un Dockerfile multi-stage : une première étape utilise l’image de build Java 25 et Maven
-pour produire l’artefact; l’étape finale utilise une image JRE 25 légère, exécute le processus avec
-un utilisateur non root et ne contient ni sources ni outils de compilation inutiles.
-Le conteneur doit recevoir la configuration par variables d’environnement, exposer le port prévu,
-arrêter proprement l’application et fournir un point de santé exploitable. Les secrets ne sont ni
-copiés dans l’image ni écrits dans les logs.
-Tags: `urgent`
-<!-- due: 2026-11-07 -->
-<!-- assignee: Gana -->
-
 ## Done
 
 ### Backends
@@ -47,6 +33,18 @@ fonctions métier
 Tags: `urgent`
 <!-- priority: high -->
 <!-- workload: hard -->
+<!-- due: 2026-11-07 -->
+<!-- assignee: Gana -->
+
+#### Conteneurisation
+<!-- id: task-1794095569939-79 -->
+Rédiger un Dockerfile multi-stage : une première étape utilise l’image de build Java 25 et Maven
+pour produire l’artefact; l’étape finale utilise une image JRE 25 légère, exécute le processus avec
+un utilisateur non root et ne contient ni sources ni outils de compilation inutiles.
+Le conteneur doit recevoir la configuration par variables d’environnement, exposer le port prévu,
+arrêter proprement l’application et fournir un point de santé exploitable. Les secrets ne sont ni
+copiés dans l’image ni écrits dans les logs.
+Tags: `urgent`
 <!-- due: 2026-11-07 -->
 <!-- assignee: Gana -->
 
