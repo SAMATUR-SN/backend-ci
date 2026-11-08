@@ -13,6 +13,7 @@ import java.util.Optional;
 public interface DossierRepository extends JpaRepository<Dossier, Long> {
 
     Optional<Dossier> findByEleveId(Long eleveId);
+    boolean existsByReference(String reference);
     List<Dossier> findByEtape(StatutDossier etape);
 
     long countByEtape(StatutDossier etape);

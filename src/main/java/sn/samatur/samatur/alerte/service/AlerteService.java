@@ -29,7 +29,7 @@ public class AlerteService {
 
         for (Dossier dossier : dossiers) {
             // Ignorer les dossiers déjà terminés
-            if (dossier.getEtape() == StatutDossier.ACTE_REMIS) {
+            if (dossier.getEtape() == StatutDossier.REMIS) {
                 continue;
             }
 
@@ -63,7 +63,6 @@ public class AlerteService {
         switch (etape) {
             case DETECTE:
                 return 15;
-            case CERTIFICAT_OBTENU:
             case CERTIFICAT_ETABLI:
                 return 30;
             case DOSSIER_COMPLET:

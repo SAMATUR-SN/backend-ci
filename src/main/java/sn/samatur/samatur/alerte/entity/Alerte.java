@@ -21,7 +21,7 @@ public class Alerte {
     @JoinColumn(name = "dossier_id", nullable = false)
     private Dossier dossier;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String message;
 
     @Column(name = "date_alerte", nullable = false)

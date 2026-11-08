@@ -6,11 +6,16 @@ import org.springframework.transaction.annotation.Transactional;
 import sn.samatur.samatur.dossier.entity.Dossier;
 import sn.samatur.samatur.dossier.entity.HistoriqueEtape;
 import sn.samatur.samatur.dossier.entity.StatutDossier;
+import sn.samatur.samatur.dossier.dto.CreationDossierRequest;
 import sn.samatur.samatur.dossier.repository.DossierRepository;
 import sn.samatur.samatur.dossier.repository.HistoriqueEtapeRepository;
+import sn.samatur.samatur.eleve.entity.Eleve;
+import sn.samatur.samatur.eleve.repository.EleveRepository;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
 @Service
@@ -22,6 +27,9 @@ public class DossierService {
     @Autowired
     private HistoriqueEtapeRepository historiqueEtapeRepository;
 
+    @Autowired
+    private EleveRepository eleveRepository;
+
     // 1. Lister tous les dossiers
     public List<Dossier> listerTous() {
         return dossierRepository.findAll();
@@ -32,11 +40,44 @@ public class DossierService {
         return dossierRepository.findById(id);
     }
 
+    @Transactional
+    public Dossier creerDossier(CreationDossierRequest request) {
+        String reference = request.reference().trim();
+        if (dossierRepository.existsByReference(reference)) {
+            throw new IllegalArgumentException("Cette référence de dossier existe déjà.");
+        }
+
+        Eleve eleve = eleveRepository.findById(request.eleveId())
+                .orElseThrow(() -> new NoSuchElementException(
+                        "Élève avec l'ID " + request.eleveId() + " introuvable."));
+        if (dossierRepository.findByEleveId(eleve.getId()).isPresent()) {
+            throw new IllegalStateException("Cet élève possède déjà un dossier.");
+        }
+
+        Dossier dossier = new Dossier();
+        dossier.setReference(reference);
+        dossier.setEleve(eleve);
+        dossier.setEtape(StatutDossier.DETECTE);
+        dossier.setDateDetection(LocalDate.now());
+        Dossier dossierSauvegarde = dossierRepository.save(dossier);
+
+        enregistrerHistorique(dossierSauvegarde, null, StatutDossier.DETECTE,
+                "Création du dossier");
+        return dossierSauvegarde;
+    }
+
+    public List<HistoriqueEtape> obtenirHistorique(Long dossierId) {
+        if (!dossierRepository.existsById(dossierId)) {
+            throw new NoSuchElementException("Dossier avec l'ID " + dossierId + " introuvable.");
+        }
+        return historiqueEtapeRepository.findByDossierIdOrderByDateHeureAscIdAsc(dossierId);
+    }
+
     // 3. Faire avancer un dossier à l'étape suivante (Machine à états)
     @Transactional
-    public Dossier avancerEtape(Long dossierId, String auteur) {
+    public Dossier avancerEtape(Long dossierId) {
         Dossier dossier = dossierRepository.findById(dossierId)
-                .orElseThrow(() -> new RuntimeException("Dossier avec l'ID " + dossierId + " introuvable."));
+                .orElseThrow(() -> new NoSuchElementException("Dossier avec l'ID " + dossierId + " introuvable."));
 
         StatutDossier ancienneEtape = dossier.getEtape();
         StatutDossier nouvelleEtape;
@@ -44,9 +85,6 @@ public class DossierService {
         // Définition de la logique séquentielle de la machine à états
         switch (ancienneEtape) {
             case DETECTE:
-                nouvelleEtape = StatutDossier.CERTIFICAT_OBTENU;
-                break;
-            case CERTIFICAT_OBTENU:
                 nouvelleEtape = StatutDossier.CERTIFICAT_ETABLI;
                 break;
             case CERTIFICAT_ETABLI:
@@ -59,10 +97,10 @@ public class DossierService {
                 nouvelleEtape = StatutDossier.TRANSCRIT;
                 break;
             case TRANSCRIT:
-                nouvelleEtape = StatutDossier.ACTE_REMIS;
+                nouvelleEtape = StatutDossier.REMIS;
                 break;
-            case ACTE_REMIS:
-                throw new IllegalStateException("Le dossier est déjà à l'étape finale (ACTE_REMIS).");
+            case REMIS:
+                throw new IllegalStateException("Le dossier est déjà à l'étape finale (REMIS).");
             default:
                 throw new IllegalStateException("Étape actuelle inconnue.");
         }
@@ -72,14 +110,20 @@ public class DossierService {
         Dossier dossierSauvegarde = dossierRepository.save(dossier);
 
         // Enregistrement de la transition dans l'historique
-        HistoriqueEtape historique = new HistoriqueEtape();
-        historique.setDossier(dossierSauvegarde);
-        historique.setEtapeArrivee(nouvelleEtape);
-        historique.setDateHeure(LocalDateTime.now());
-        historique.setCommentaire("Transition de " + ancienneEtape + " vers " + nouvelleEtape);
-        
-        historiqueEtapeRepository.save(historique);
+        enregistrerHistorique(dossierSauvegarde, ancienneEtape, nouvelleEtape,
+                "Transition de " + ancienneEtape + " vers " + nouvelleEtape);
 
         return dossierSauvegarde;
+    }
+
+    private void enregistrerHistorique(Dossier dossier, StatutDossier etapeDepart,
+            StatutDossier etapeArrivee, String commentaire) {
+        HistoriqueEtape historique = new HistoriqueEtape();
+        historique.setDossier(dossier);
+        historique.setEtapeDepart(etapeDepart);
+        historique.setEtapeArrivee(etapeArrivee);
+        historique.setDateHeure(LocalDateTime.now());
+        historique.setCommentaire(commentaire);
+        historiqueEtapeRepository.save(historique);
     }
 }

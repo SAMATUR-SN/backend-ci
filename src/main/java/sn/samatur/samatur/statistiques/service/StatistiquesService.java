@@ -32,8 +32,8 @@ public class StatistiquesService {
         }
         stats.put("repartitionParEtape", parEtape);
 
-        // Taux d'achèvement (Dossiers à l'étape ACTE_REMIS / Total)
-        long dossiersTermines = dossierRepository.countByEtape(StatutDossier.ACTE_REMIS);
+        // Taux d'achèvement (Dossiers à l'étape REMIS / Total)
+        long dossiersTermines = dossierRepository.countByEtape(StatutDossier.REMIS);
         double tauxAchèvement = totalDossiers > 0 ? ((double) dossiersTermines / totalDossiers) * 100 : 0.0;
         stats.put("tauxAchèvementPourcent", tauxAchèvement);
 

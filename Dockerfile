@@ -1,7 +1,7 @@
 # ==========================================
-# ÉTAPE 1 : Build de l'application (Maven + Java 25)
+# ÉTAPE 1 : Build de l'application (Maven + Java 21)
 # ==========================================
-FROM eclipse-temurin:25-jdk-jammy AS builder
+FROM eclipse-temurin:21-jdk-jammy AS builder
 
 WORKDIR /app
 
@@ -15,9 +15,9 @@ COPY src src
 RUN chmod +x ./mvnw && ./mvnw clean package -DskipTests
 
 # ==========================================
-# ÉTAPE 2 : Image finale légère (JRE 25)
+# ÉTAPE 2 : Image finale légère (JRE 21)
 # ==========================================
-FROM eclipse-temurin:25-jre-jammy
+FROM eclipse-temurin:21-jre-jammy
 
 # Création d'un utilisateur non-root dédié pour des raisons de sécurité
 RUN groupadd -g 1000 samatur && \

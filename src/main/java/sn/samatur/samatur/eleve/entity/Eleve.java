@@ -1,6 +1,7 @@
 package sn.samatur.samatur.eleve.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 import sn.samatur.samatur.referentiel.entity.Commune;
@@ -31,7 +32,8 @@ public class Eleve {
     @Column(nullable = false)
     private String prenom;
 
-    @Column(name = "date_naissance")
+    @NotNull
+    @Column(name = "date_naissance", nullable = false)
     private LocalDate dateNaissance;
 
     @Column(name = "date_naissance_presumee")
@@ -41,11 +43,13 @@ public class Eleve {
     private String classe;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @NotNull
     @JoinColumn(name = "ecole_id", nullable = false)
     private Ecole ecole;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "commune_naissance_id")
+    @NotNull
+    @JoinColumn(name = "commune_naissance_id", nullable = false)
     private Commune communeNaissance;
 
     @Column(name = "nom_pere", length = 150)

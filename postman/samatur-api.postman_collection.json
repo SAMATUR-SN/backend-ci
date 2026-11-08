@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "98ef2aae-886a-4729-acbc-6ef7d55def40",
     "name": "SamaTur API",
-    "description": "Requêtes pour les routes actuellement exposées. Renseigner l'environnement SamaTur - local, puis lancer Connexion pour stocker le JWT.",
+    "description": "Requêtes pour l'API SamaTur. Renseigner l'environnement SamaTur - local, puis lancer Connexion pour stocker le JWT.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
@@ -134,7 +134,7 @@
           "name": "Importer des eleves CSV",
           "request": {
             "method": "POST",
-            "description": "Ajouter un fichier dans le champ file apres import de la collection. Le CSV utilise le point-virgule comme separateur.",
+            "description": "Le CSV utilise le point-virgule. Colonnes requises : numero_ine, nom, prenom, classe, ecole_id, date_naissance, sexe, commune_naissance_id ; date_naissance_presumee est facultative en 9e colonne.",
             "body": {
               "mode": "formdata",
               "formdata": [
@@ -154,6 +154,28 @@
       "name": "Dossiers",
       "item": [
         {
+          "name": "Creer un dossier",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reference\": \"DOS-POSTMAN-{{$timestamp}}\",\n  \"eleveId\": {{eleveId}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/api/dossiers"
+          }
+        },
+        {
           "name": "Lister les dossiers",
           "request": {
             "method": "GET",
@@ -168,11 +190,37 @@
           }
         },
         {
+          "name": "Consulter l'historique d'un dossier",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/dossiers/{{dossierId}}/historique"
+          }
+        },
+        {
           "name": "Avancer un dossier",
           "request": {
             "method": "POST",
             "description": "Operation avec effet de bord : fait avancer le dossier d'une etape et ecrit son historique.",
             "url": "{{baseUrl}}/api/dossiers/{{dossierId}}/avancer"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Referentiels",
+      "item": [
+        {
+          "name": "Lister les ecoles",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/referentiels/ecoles"
+          }
+        },
+        {
+          "name": "Lister les communes",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/referentiels/communes"
           }
         }
       ]

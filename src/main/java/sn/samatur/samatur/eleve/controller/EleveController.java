@@ -3,6 +3,7 @@ package sn.samatur.samatur.eleve.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import io.swagger.v3.oas.annotations.Operation;
@@ -12,6 +13,7 @@ import sn.samatur.samatur.eleve.entity.Eleve;
 import sn.samatur.samatur.eleve.service.EleveService;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 
 @RestController
 @RequestMapping("/api/eleves")
@@ -45,21 +47,27 @@ public class EleveController {
     @PostMapping
     @Operation(summary = "Créer un élève")
     @PreAuthorize("hasAnyRole('ECOLE', 'SUPERVISEUR')")
-    public ResponseEntity<Eleve> creerEleve(@RequestBody Eleve eleve) {
-        Eleve nouvelEleve = eleveService.enregistrerEleve(eleve);
-        return ResponseEntity.ok(nouvelEleve);
+    public ResponseEntity<?> creerEleve(@Valid @RequestBody Eleve eleve) {
+        try {
+            Eleve nouvelEleve = eleveService.enregistrerEleve(eleve);
+            return ResponseEntity.ok(nouvelEleve);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
     // 4. Modifier un élève existant
     @PutMapping("/{id}")
     @Operation(summary = "Modifier un élève")
     @PreAuthorize("hasAnyRole('ECOLE', 'SUPERVISEUR')")
-    public ResponseEntity<Eleve> modifierEleve(@PathVariable Long id, @RequestBody Eleve eleveDetails) {
+    public ResponseEntity<?> modifierEleve(@PathVariable Long id, @Valid @RequestBody Eleve eleveDetails) {
         try {
             Eleve eleveModifie = eleveService.modifierEleve(id, eleveDetails);
             return ResponseEntity.ok(eleveModifie);
-        } catch (RuntimeException e) {
+        } catch (NoSuchElementException e) {
             return ResponseEntity.notFound().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
@@ -71,7 +79,7 @@ public class EleveController {
         try {
             eleveService.supprimerEleve(id);
             return ResponseEntity.noContent().build();
-        } catch (RuntimeException e) {
+        } catch (NoSuchElementException e) {
             return ResponseEntity.notFound().build();
         }
     }

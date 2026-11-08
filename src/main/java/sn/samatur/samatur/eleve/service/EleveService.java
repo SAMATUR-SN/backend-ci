@@ -5,7 +5,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import sn.samatur.samatur.eleve.entity.Eleve;
 import sn.samatur.samatur.eleve.repository.EleveRepository;
+import sn.samatur.samatur.referentiel.entity.Commune;
 import sn.samatur.samatur.referentiel.entity.Ecole;
+import sn.samatur.samatur.referentiel.repository.CommuneRepository;
 import sn.samatur.samatur.referentiel.repository.EcoleRepository;
 
 import java.io.BufferedReader;
@@ -14,6 +16,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
 @Service
@@ -24,6 +27,9 @@ public class EleveService {
 
     @Autowired
     private EcoleRepository ecoleRepository;
+
+    @Autowired
+    private CommuneRepository communeRepository;
 
     // --- 1. CRUD : Lister tous les élèves ---
     public List<Eleve> listerTous() {
@@ -37,6 +43,7 @@ public class EleveService {
 
     // --- 3. CRUD : Enregistrer ou Créer un élève (unitaire) ---
     public Eleve enregistrerEleve(Eleve eleve) {
+        verifierEtChargerReferentiels(eleve);
         if (eleve.getDateNaissancePresumee() == null) {
             eleve.setDateNaissancePresumee(false);
         }
@@ -46,7 +53,7 @@ public class EleveService {
     // --- 4. CRUD : Modifier un élève existant ---
     public Eleve modifierEleve(Long id, Eleve eleveDetails) {
         Eleve eleve = eleveRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Élève avec l'ID " + id + " introuvable."));
+                .orElseThrow(() -> new NoSuchElementException("Élève avec l'ID " + id + " introuvable."));
 
         eleve.setNumeroIne(eleveDetails.getNumeroIne());
         eleve.setNom(eleveDetails.getNom());
@@ -59,6 +66,7 @@ public class EleveService {
             eleve.setDateNaissancePresumee(eleveDetails.getDateNaissancePresumee());
         }
         
+        verifierEtChargerReferentiels(eleveDetails);
         eleve.setEcole(eleveDetails.getEcole());
         eleve.setCommuneNaissance(eleveDetails.getCommuneNaissance());
         eleve.setNomPere(eleveDetails.getNomPere());
@@ -72,7 +80,7 @@ public class EleveService {
     // --- 5. CRUD : Supprimer un élève ---
     public void supprimerEleve(Long id) {
         if (!eleveRepository.existsById(id)) {
-            throw new RuntimeException("Élève avec l'ID " + id + " introuvable.");
+            throw new NoSuchElementException("Élève avec l'ID " + id + " introuvable.");
         }
         eleveRepository.deleteById(id);
     }
@@ -83,20 +91,17 @@ public class EleveService {
         try (BufferedReader br = new BufferedReader(new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
             String ligne;
             int numeroLigne = 0;
-            
-            // Ignorer l'en-tête du CSV si présent
-            ligne = br.readLine();
-            if (ligne != null && ligne.toLowerCase().contains("ine")) {
-                numeroLigne++;
-            }
 
             while ((ligne = br.readLine()) != null) {
                 numeroLigne++;
-                String[] colonnes = ligne.split(";"); // Séparateur point-virgule
+                if (numeroLigne == 1 && ligne.toLowerCase().contains("ine")) {
+                    continue;
+                }
+                String[] colonnes = ligne.split(";", -1);
 
-                // On s'attend au moins à 7 colonnes : numero_ine, nom, prenom, classe, ecole_id, date_naissance, sexe
-                if (colonnes.length < 7) {
-                    erreurs.add("Ligne " + numeroLigne + " : Format invalide (colonnes insuffisantes, 7 attendues).");
+                // Required columns: INE, name, first name, class, school ID, birth date, sex, birth commune ID.
+                if (colonnes.length < 8) {
+                    erreurs.add("Ligne " + numeroLigne + " : 8 colonnes obligatoires attendues, dont commune_naissance_id en 8e position.");
                     continue;
                 }
 
@@ -108,9 +113,22 @@ public class EleveService {
                     Long ecoleId = Long.parseLong(colonnes[4].trim());
                     String dateNaissanceStr = colonnes[5].trim();
                     String sexe = colonnes[6].trim();
+                    if (colonnes[7].trim().isEmpty()) {
+                        throw new IllegalArgumentException("La commune de naissance est obligatoire.");
+                    }
+                    Long communeId = Long.parseLong(colonnes[7].trim());
+
+                    if (dateNaissanceStr.isEmpty()) {
+                        throw new IllegalArgumentException("La date de naissance est obligatoire.");
+                    }
+                    if (!"M".equals(sexe) && !"F".equals(sexe)) {
+                        throw new IllegalArgumentException("Le sexe doit être M ou F.");
+                    }
 
                     Ecole ecole = ecoleRepository.findById(ecoleId)
                             .orElseThrow(() -> new RuntimeException("École ID " + ecoleId + " introuvable"));
+                    Commune commune = communeRepository.findById(communeId)
+                            .orElseThrow(() -> new RuntimeException("Commune ID " + communeId + " introuvable"));
 
                     Eleve eleve = eleveRepository.findByNumeroIne(numeroIne).orElse(new Eleve());
                     eleve.setNumeroIne(numeroIne);
@@ -118,18 +136,18 @@ public class EleveService {
                     eleve.setPrenom(prenom);
                     eleve.setClasse(classe);
                     eleve.setEcole(ecole);
+                    eleve.setCommuneNaissance(commune);
                     eleve.setSexe(sexe);
 
-                    // Valeur par défaut obligatoire pour éviter l'erreur NOT NULL en base
-                    eleve.setDateNaissancePresumee(false); 
+                    eleve.setDateNaissance(LocalDate.parse(dateNaissanceStr));
+                    eleve.setDateNaissancePresumee(false);
 
-                    if (!dateNaissanceStr.isEmpty()) {
-                        eleve.setDateNaissance(LocalDate.parse(dateNaissanceStr));
-                    }
-
-                    // Si ton CSV fournit la 8ème colonne pour date_naissance_presumee (true/false)
-                    if (colonnes.length > 7 && !colonnes[7].trim().isEmpty()) {
-                        eleve.setDateNaissancePresumee(Boolean.parseBoolean(colonnes[7].trim()));
+                    if (colonnes.length > 8 && !colonnes[8].trim().isEmpty()) {
+                        String datePresumee = colonnes[8].trim();
+                        if (!"true".equalsIgnoreCase(datePresumee) && !"false".equalsIgnoreCase(datePresumee)) {
+                            throw new IllegalArgumentException("date_naissance_presumee doit valoir true ou false.");
+                        }
+                        eleve.setDateNaissancePresumee(Boolean.parseBoolean(datePresumee));
                     }
 
                     eleveRepository.save(eleve);
@@ -141,5 +159,21 @@ public class EleveService {
             erreurs.add("Erreur globale lors de la lecture du fichier : " + e.getMessage());
         }
         return erreurs;
+    }
+
+    private void verifierEtChargerReferentiels(Eleve eleve) {
+        if (eleve.getEcole() == null || eleve.getEcole().getId() == null) {
+            throw new IllegalArgumentException("Une école valide est obligatoire.");
+        }
+        if (eleve.getCommuneNaissance() == null || eleve.getCommuneNaissance().getId() == null) {
+            throw new IllegalArgumentException("Une commune de naissance valide est obligatoire.");
+        }
+
+        Ecole ecole = ecoleRepository.findById(eleve.getEcole().getId())
+                .orElseThrow(() -> new IllegalArgumentException("École introuvable."));
+        Commune commune = communeRepository.findById(eleve.getCommuneNaissance().getId())
+                .orElseThrow(() -> new IllegalArgumentException("Commune de naissance introuvable."));
+        eleve.setEcole(ecole);
+        eleve.setCommuneNaissance(commune);
     }
 }
