@@ -1,0 +1,14 @@
+meta {
+  name: Obtenir un eleve
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/eleves/{{eleveId}}
+  body: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}

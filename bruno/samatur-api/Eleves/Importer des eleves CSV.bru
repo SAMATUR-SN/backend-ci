@@ -1,0 +1,18 @@
+meta {
+  name: Importer des eleves CSV
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/api/eleves/import
+  body: multipartForm
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}
+
+body:multipart-form {
+  file: @file(C:/path/to/eleves.csv)
+}

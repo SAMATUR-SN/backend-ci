@@ -1,0 +1,14 @@
+meta {
+  name: Resoudre une alerte
+  type: http
+  seq: 3
+}
+
+patch {
+  url: {{baseUrl}}/api/alertes/{{alerteId}}/resoudre
+  body: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}
