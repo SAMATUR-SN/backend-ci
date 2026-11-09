@@ -102,6 +102,13 @@ public class GestionnaireErreurs extends ResponseEntityExceptionHandler {
             HttpHeaders headers, HttpStatusCode status, WebRequest request) {
         List<ErreurChamp> liste = ex.getBindingResult().getFieldErrors().stream()
                 .map(f -> new ErreurChamp(f.getField(), messageDe(f))).toList();
+        // Un paramètre de requête mal typé (etape=INCONNUE, communeId=abc) est une erreur 400, pas 422
+        if (ex.getBindingResult().getFieldErrors().stream().anyMatch(f -> "typeMismatch".equals(f.getCode()))) {
+            ProblemDetail p = probleme(HttpStatus.BAD_REQUEST, "parametre-invalide", "Paramètre invalide",
+                    "Un paramètre n'a pas le type ou la valeur attendus.");
+            p.setProperty("erreurs", liste);
+            return ResponseEntity.badRequest().body(p);
+        }
         ProblemDetail p = probleme(HttpStatus.UNPROCESSABLE_CONTENT, "champ-obligatoire",
                 "Champ obligatoire manquant", "La requête est incomplète ou invalide.");
         p.setProperty("erreurs", liste);
