@@ -1,6 +1,11 @@
 package sn.samatur.samatur.dossier.repository;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import sn.samatur.samatur.dossier.entity.Dossier;
@@ -10,7 +15,12 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface DossierRepository extends JpaRepository<Dossier, Long> {
+public interface DossierRepository extends JpaRepository<Dossier, Long>, JpaSpecificationExecutor<Dossier> {
+
+    /** Liste paginée et filtrée : l'élève, son école et sa commune sont chargés dans la même requête. */
+    @Override
+    @EntityGraph(attributePaths = {"eleve", "eleve.ecole", "eleve.communeNaissance"})
+    Page<Dossier> findAll(Specification<Dossier> spec, Pageable pageable);
 
     Optional<Dossier> findByEleveId(Long eleveId);
     List<Dossier> findByEtape(StatutDossier etape);

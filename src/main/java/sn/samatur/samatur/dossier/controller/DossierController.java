@@ -4,17 +4,18 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import org.springframework.http.ResponseEntity;
+import jakarta.validation.constraints.Min;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import sn.samatur.samatur.commun.PageDto;
 import sn.samatur.samatur.dossier.dto.AvancerDossierRequest;
 import sn.samatur.samatur.dossier.dto.DossierDetailDto;
-import sn.samatur.samatur.dossier.entity.Dossier;
+import sn.samatur.samatur.dossier.dto.DossierResumeDto;
+import sn.samatur.samatur.dossier.dto.FiltreDossiers;
 import sn.samatur.samatur.dossier.service.DossierService;
 import sn.samatur.samatur.security.UserDetailsImpl;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/dossiers")
@@ -28,12 +29,17 @@ public class DossierController {
         this.dossierService = dossierService;
     }
 
-    // Lister tous les dossiers (paginé, filtré et en DTO au bloc 5)
     @GetMapping
-    @Operation(summary = "Lister les dossiers")
+    @Operation(summary = "Lister les dossiers, paginés et filtrés",
+            description = "Filtres facultatifs : etape, communeId, ecoleId, classe, enRetard, q. "
+                    + "taille est plafonnée à 100 ; tri vaut par exemple dateDetection,desc (par défaut), "
+                    + "reference,asc ou dateJugement,asc.")
     @PreAuthorize("hasAnyRole('ECOLE', 'ETAT_CIVIL', 'TRIBUNAL', 'SUPERVISEUR')")
-    public ResponseEntity<List<Dossier>> listerTous() {
-        return ResponseEntity.ok(dossierService.listerTous());
+    public PageDto<DossierResumeDto> lister(@ParameterObject FiltreDossiers filtre,
+                                            @RequestParam(defaultValue = "0") @Min(0) int page,
+                                            @RequestParam(defaultValue = "20") @Min(1) int taille,
+                                            @RequestParam(required = false) String tri) {
+        return dossierService.lister(filtre, page, taille, tri);
     }
 
     @GetMapping("/{id}")
