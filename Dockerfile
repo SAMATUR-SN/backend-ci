@@ -43,7 +43,7 @@ ENV JAVA_TOOL_OPTIONS="-Xmx512m"
 # Santé du conteneur, utilisée par Docker, Traefik et le pipeline CD.
 # L'image n'a ni curl ni wget : bash ouvre la connexion lui-même (/dev/tcp), sans paquet de plus à scanner.
 HEALTHCHECK --interval=15s --timeout=3s --start-period=60s --retries=3 \
-  CMD bash -c 'exec 3<>/dev/tcp/127.0.0.1/8080 && printf "GET /actuator/health HTTP/1.0\r\nHost: localhost\r\n\r\n" >&3 && grep -q "\"status\":\"UP\"" <&3'
+  CMD bash -c 'exec 3<>/dev/tcp/127.0.0.1/8080 && printf "GET /health HTTP/1.0\r\nHost: localhost\r\n\r\n" >&3 && grep -q "\"status\":\"UP\"" <&3'
 
 # Forme exec (tableau) : l'application reçoit directement les signaux d'arrêt (SIGTERM)
 ENTRYPOINT ["java", "-jar", "app.jar"]
