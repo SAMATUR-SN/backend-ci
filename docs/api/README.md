@@ -21,6 +21,14 @@ Base URL par défaut : `http://localhost:8080`.
 
 Utiliser `.env.example` comme modèle pour définir les variables dans l'environnement de lancement, notamment `SPRING_DATASOURCE_PASSWORD` et `SAMATUR_JWT_SECRET`. Avec `compose.dev.yaml`, le fichier `.env` est lu par Docker Compose : `docker compose -f compose.dev.yaml up` lance la base et l'API. Depuis un IDE, Spring Boot ne charge pas ce fichier : définir les variables dans la configuration de lancement. Générer une clé JWT aléatoire d'au moins 32 octets et ne pas la partager ni la committer. Les fichiers `.env` sont ignorés par Git ; seul le modèle `.env.example` est versionné.
 
+## Lancer les tests
+
+```
+docker compose -f compose.dev.yaml run --rm backend ./mvnw clean verify
+```
+
+Les tests d'intégration démarrent une base PostgreSQL 18 jetable avec Testcontainers : Docker doit tourner (sur un agent Jenkins aussi). `mvn verify` produit le rapport de couverture JaCoCo dans `target/site/jacoco/` (`jacoco.xml` pour SonarQube, `index.html` à ouvrir dans un navigateur). Le test de connexion des quatre comptes de démo lit leurs mots de passe dans la variable `SAMATUR_DEMO_MOTS_DE_PASSE` (voir `.env.example`) ; sans elle, il est ignoré.
+
 ## Routes exposées
 
 Toutes les routes métier sont sous `/api`, en JSON, avec des champs en camelCase et des dates au format ISO (`2026-11-04`).
