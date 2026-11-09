@@ -1,8 +1,12 @@
 package sn.samatur.samatur.eleve.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import sn.samatur.samatur.commun.RessourceIntrouvableException;
+import sn.samatur.samatur.eleve.dto.EleveDto;
 import sn.samatur.samatur.eleve.entity.Eleve;
 import sn.samatur.samatur.eleve.repository.EleveRepository;
 import sn.samatur.samatur.referentiel.entity.Ecole;
@@ -14,7 +18,6 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class EleveService {
@@ -25,57 +28,20 @@ public class EleveService {
     @Autowired
     private EcoleRepository ecoleRepository;
 
-    // --- 1. CRUD : Lister tous les élèves ---
-    public List<Eleve> listerTous() {
-        return eleveRepository.findAll();
+    // Lister les élèves, en DTO construits dans la transaction (école et commune chargées à la demande)
+    @Transactional(readOnly = true)
+    public List<EleveDto> listerTous() {
+        return eleveRepository.findAll(Sort.by("nom", "prenom")).stream().map(EleveDto::de).toList();
     }
 
-    // --- 2. CRUD : Trouver un élève par son ID ---
-    public Optional<Eleve> trouverParId(Long id) {
-        return eleveRepository.findById(id);
+    // Trouver un élève par son id
+    @Transactional(readOnly = true)
+    public EleveDto trouverParId(Long id) {
+        return eleveRepository.findById(id).map(EleveDto::de)
+                .orElseThrow(() -> new RessourceIntrouvableException("Élève " + id + " introuvable."));
     }
 
-    // --- 3. CRUD : Enregistrer ou Créer un élève (unitaire) ---
-    public Eleve enregistrerEleve(Eleve eleve) {
-        if (eleve.getDateNaissancePresumee() == null) {
-            eleve.setDateNaissancePresumee(false);
-        }
-        return eleveRepository.save(eleve);
-    }
-
-    // --- 4. CRUD : Modifier un élève existant ---
-    public Eleve modifierEleve(Long id, Eleve eleveDetails) {
-        Eleve eleve = eleveRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Élève avec l'ID " + id + " introuvable."));
-
-        eleve.setNumeroIne(eleveDetails.getNumeroIne());
-        eleve.setNom(eleveDetails.getNom());
-        eleve.setPrenom(eleveDetails.getPrenom());
-        eleve.setClasse(eleveDetails.getClasse());
-        eleve.setSexe(eleveDetails.getSexe());
-        eleve.setDateNaissance(eleveDetails.getDateNaissance());
-        
-        if (eleveDetails.getDateNaissancePresumee() != null) {
-            eleve.setDateNaissancePresumee(eleveDetails.getDateNaissancePresumee());
-        }
-        
-        eleve.setEcole(eleveDetails.getEcole());
-        eleve.setCommuneNaissance(eleveDetails.getCommuneNaissance());
-        eleve.setNomPere(eleveDetails.getNomPere());
-        eleve.setNomMere(eleveDetails.getNomMere());
-
-        return eleveRepository.save(eleve);
-    }
-
-    // --- 5. CRUD : Supprimer un élève ---
-    public void supprimerEleve(Long id) {
-        if (!eleveRepository.existsById(id)) {
-            throw new RuntimeException("Élève avec l'ID " + id + " introuvable.");
-        }
-        eleveRepository.deleteById(id);
-    }
-
-    // --- 6. Importation CSV (Fonctionnelle) ---
+    // Importation CSV (réécrite au bloc 6)
     public List<String> importerCsv(MultipartFile file) {
         List<String> erreurs = new ArrayList<>();
         try (BufferedReader br = new BufferedReader(new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {

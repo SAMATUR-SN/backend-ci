@@ -1,0 +1,14 @@
+meta {
+  name: Lister les communes
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/referentiels/communes
+  body: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}

@@ -1,16 +1,25 @@
 package sn.samatur.samatur.dossier.service;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 import sn.samatur.samatur.commun.ConflitException;
+import sn.samatur.samatur.commun.PageDto;
 import sn.samatur.samatur.commun.RegleMetierException;
 import sn.samatur.samatur.commun.RessourceIntrouvableException;
 import sn.samatur.samatur.dossier.dto.AvancerDossierRequest;
 import sn.samatur.samatur.dossier.dto.DossierDetailDto;
+import sn.samatur.samatur.dossier.dto.DossierResumeDto;
+import sn.samatur.samatur.dossier.dto.FiltreDossiers;
 import sn.samatur.samatur.dossier.dto.HistoriqueDto;
 import sn.samatur.samatur.dossier.dto.TemoinDto;
+import sn.samatur.samatur.dossier.repository.DossierSpecifications;
 import sn.samatur.samatur.dossier.entity.Dossier;
 import sn.samatur.samatur.dossier.entity.HistoriqueEtape;
 import sn.samatur.samatur.dossier.entity.PreuveNaissance;
@@ -70,9 +79,43 @@ public class DossierService {
         this.delaiCibleJours = delaiCibleJours;
     }
 
-    // Lister tous les dossiers (paginé et filtré au bloc 5)
-    public List<Dossier> listerTous() {
-        return dossierRepository.findAll();
+    /** Champs de tri acceptés par le paramètre tri (« champ,asc » ou « champ,desc »). */
+    private static final Map<String, String> TRIS = Map.of(
+            "reference", "reference",
+            "dateDetection", "dateDetection",
+            "dateJugement", "dateJugement");
+
+    /**
+     * F2 : liste paginée et filtrée. Les DTO sont construits dans la transaction, sinon
+     * les relations chargées à la demande (école, commune) échoueraient hors session.
+     */
+    @Transactional(readOnly = true)
+    public PageDto<DossierResumeDto> lister(FiltreDossiers f, int page, int taille, String tri) {
+        LocalDate aujourdhui = LocalDate.now(horloge);
+        Specification<Dossier> spec = Specification.allOf(
+                DossierSpecifications.etape(f.etape()),
+                DossierSpecifications.commune(f.communeId()),
+                DossierSpecifications.ecole(f.ecoleId()),
+                DossierSpecifications.classe(f.classe()),
+                DossierSpecifications.enRetard(f.enRetard(), aujourdhui.minusDays(delaiCibleJours)),
+                DossierSpecifications.recherche(f.q()));
+        PageRequest pageable = PageRequest.of(page, Math.min(taille, 100), ordre(tri).and(Sort.by("id")));
+        return PageDto.de(dossierRepository.findAll(spec, pageable)
+                .map(d -> DossierResumeDto.de(d, estEnRetard(d), aujourdhui)));
+    }
+
+    private static Sort ordre(String tri) {
+        if (tri == null || tri.isBlank()) {
+            return Sort.by("dateDetection").descending();
+        }
+        String[] morceaux = tri.split(",");
+        String champ = TRIS.get(morceaux[0].trim());
+        String sens = morceaux.length > 1 ? morceaux[1].trim().toLowerCase() : "asc";
+        if (champ == null || !(sens.equals("asc") || sens.equals("desc"))) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Tri inconnu : utiliser reference, dateDetection ou dateJugement, suivi de ,asc ou ,desc.");
+        }
+        return Sort.by(Sort.Direction.fromString(sens), champ);
     }
 
     /** F3 : le dossier complet, avec ses témoins et son historique. */

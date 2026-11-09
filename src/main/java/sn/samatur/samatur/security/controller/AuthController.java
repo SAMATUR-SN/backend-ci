@@ -1,52 +1,55 @@
 package sn.samatur.samatur.security.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import sn.samatur.samatur.security.JwtUtils;
+import sn.samatur.samatur.security.ProfilService;
 import sn.samatur.samatur.security.UserDetailsImpl;
-import sn.samatur.samatur.security.dto.JwtResponse;
 import sn.samatur.samatur.security.dto.LoginRequest;
-
-import java.util.List;
-import java.util.stream.Collectors;
+import sn.samatur.samatur.security.dto.ReponseConnexion;
+import sn.samatur.samatur.security.dto.UtilisateurDto;
 
 @RestController
 @RequestMapping("/api/auth")
 @Tag(name = "Authentification")
 public class AuthController {
 
-    @Autowired
-    AuthenticationManager authenticationManager;
+    private final AuthenticationManager authenticationManager;
+    private final JwtUtils jwtUtils;
+    private final ProfilService profils;
 
-    @Autowired
-    JwtUtils jwtUtils;
+    public AuthController(AuthenticationManager authenticationManager, JwtUtils jwtUtils, ProfilService profils) {
+        this.authenticationManager = authenticationManager;
+        this.jwtUtils = jwtUtils;
+        this.profils = profils;
+    }
 
     @PostMapping("/connexion")
-    @Operation(summary = "Se connecter", description = "Retourne un JWT Bearer à utiliser pour les autres routes protégées.")
-    public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
+    @SecurityRequirements
+    @Operation(summary = "Se connecter",
+            description = "Renvoie le jeton à envoyer dans l'en-tête Authorization: Bearer, sa date d'expiration "
+                    + "et l'utilisateur. Identifiant inconnu, mauvais mot de passe ou compte désactivé : 401, "
+                    + "toujours avec le même message.")
+    public ReponseConnexion connexion(@Valid @RequestBody LoginRequest demande) {
+        Authentication authentification = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(demande.getIdentifiant(), demande.getMotDePasse()));
+        UserDetailsImpl qui = (UserDetailsImpl) authentification.getPrincipal();
+        JwtUtils.JetonEmis jeton = jwtUtils.emettre(qui);
+        return new ReponseConnexion(jeton.jeton(), jeton.expireA(), profils.profil(qui.getUsername()));
+    }
 
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(loginRequest.getIdentifiant(), loginRequest.getMotDePasse()));
-
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        String jwt = jwtUtils.generateJwtToken((UserDetailsImpl) authentication.getPrincipal());
-
-        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-        List<String> roles = userDetails.getAuthorities().stream()
-                .map(item -> item.getAuthority())
-                .collect(Collectors.toList());
-
-        return ResponseEntity.ok(new JwtResponse(jwt,
-                userDetails.getId(),
-                userDetails.getUsername(),
-                roles));
+    @GetMapping("/moi")
+    @SecurityRequirement(name = "bearerAuth")
+    @Operation(summary = "Utilisateur connecté", description = "Rôle et structure de rattachement, lus en base.")
+    public UtilisateurDto moi(@AuthenticationPrincipal UserDetailsImpl qui) {
+        return profils.profil(qui.getUsername());
     }
 }
