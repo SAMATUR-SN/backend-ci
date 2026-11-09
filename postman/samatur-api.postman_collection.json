@@ -188,17 +188,19 @@
       "name": "Alertes",
       "item": [
         {
-          "name": "Lister les alertes actives",
+          "name": "Lister les dossiers en retard",
           "request": {
             "method": "GET",
-            "url": "{{baseUrl}}/api/alertes"
+            "url": "{{baseUrl}}/api/alertes",
+            "description": "Jugements rendus et non transcrits au-delà du délai cible (15 jours, une cible du projet et non un délai légal), du plus ancien au plus récent. Filtre facultatif communeId (commune de naissance)."
           }
         },
         {
           "name": "Verifier les retards",
           "request": {
             "method": "POST",
-            "url": "{{baseUrl}}/api/alertes/verifier"
+            "url": "{{baseUrl}}/api/alertes/verifier",
+            "description": "Rôle ETAT_CIVIL. Enregistre une alerte pour chaque dossier en retard qui n'en a pas encore (ce que fait la tâche planifiée chaque nuit). Réponse : {alertesCreees: N} ; un second appel renvoie 0."
           }
         },
         {
@@ -217,7 +219,8 @@
           "name": "Indicateurs",
           "request": {
             "method": "GET",
-            "url": "{{baseUrl}}/api/indicateurs"
+            "url": "{{baseUrl}}/api/indicateurs",
+            "description": "I1 (part des jugements transcrits dans le délai cible, entre 0 et 1), I2 (délai médian en jours entre détection et acte remis), I3 (élèves de CM2 sans acte remis à la date de référence), dossiers par étape et en retard. Filtres facultatifs : communeId, dateReference (AAAA-MM-JJ)."
           }
         }
       ]

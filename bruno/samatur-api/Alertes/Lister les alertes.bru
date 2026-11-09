@@ -1,5 +1,5 @@
 meta {
-  name: Lister les alertes actives
+  name: Lister les dossiers en retard actives
   type: http
   seq: 1
 }
@@ -11,4 +11,9 @@ get {
 
 headers {
   Authorization: Bearer {{token}}
+}
+
+docs {
+  Jugements rendus et non transcrits au-delà du délai cible (15 jours, une cible du projet et non un délai légal),
+  du plus ancien au plus récent. Filtre facultatif communeId (commune de naissance).
 }
