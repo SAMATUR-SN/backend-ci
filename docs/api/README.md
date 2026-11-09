@@ -40,10 +40,10 @@ Toutes les routes métier sont sous `/api`, en JSON, avec des champs en camelCas
 | GET | `/api/dossiers` | Connecté | page de résumés de dossiers (voir ci-dessous) |
 | GET | `/api/dossiers/{id}` | Connecté | dossier complet : élève, données de chaque étape, témoins, historique |
 | POST | `/api/dossiers/{id}/avancer` | Rôle autorisé pour l'étape visée | dossier complet mis à jour |
-| GET | `/api/alertes` | Connecté | alertes actives (revues au bloc 6) |
-| POST | `/api/alertes/verifier` | Rôle ETAT_CIVIL | lance la vérification des retards |
+| GET | `/api/alertes` | Connecté | dossiers en retard, en résumés ; filtre `communeId` |
+| POST | `/api/alertes/verifier` | Rôle ETAT_CIVIL | enregistre les alertes des nouveaux retards : `{"alertesCreees": N}` |
 | PATCH | `/api/alertes/{id}/resoudre` | Rôle ETAT_CIVIL | alerte résolue |
-| GET | `/api/indicateurs` | Connecté | indicateurs du tableau de bord (I1, I2, I3 au bloc 6) |
+| GET | `/api/indicateurs` | Connecté | I1, I2, I3, dossiers par étape et en retard ; filtres `communeId`, `dateReference` |
 
 Les élèves arrivent par l'import CSV : il n'y a ni création, ni modification, ni suppression unitaire d'un élève (décision du 09/11), et aucun dossier ni historique n'est jamais supprimé (RG-13).
 
@@ -127,6 +127,35 @@ Un fichier d'exemple est versionné dans `src/test/resources/import-exemple.csv`
 
 `commentaire` est facultatif et rejoint l'historique. Les dates doivent se suivre (détection, certificat, jugement, transcription, remise) et aucune ne peut être dans le futur. La réponse est le dossier complet, comme `GET /api/dossiers/{id}` : élève, données de chaque étape, témoins, historique, et `enRetard` calculé avec le délai cible.
 
+## Alertes de retard
+
+Un dossier est **en retard** quand il est à `JUGEMENT_RENDU` et que la date du jour dépasse la date du jugement plus le **délai cible** (15 jours par défaut, variable `SAMATUR_DELAI_CIBLE_JOURS`). C'est une cible du projet, pas un délai légal. Le retard se calcule à la lecture, jamais stocké : jugé il y a 15 jours, un dossier n'est pas encore en retard ; à 16 jours, il l'est.
+
+`GET /api/alertes` renvoie ces dossiers en résumés (même format que la liste des dossiers, sans pagination), du plus ancien jugement au plus récent ; `joursDepuisJugement` donne l'ancienneté du jugement. Chaque nuit, une tâche planifiée enregistre une alerte pour chaque nouveau dossier en retard, au plus une par dossier, même après sa résolution ; `POST /api/alertes/verifier` fait la même chose à la demande.
+
+## Indicateurs
+
+`GET /api/indicateurs` calcule à la volée les trois indicateurs de la fiche projet, globalement ou pour une commune de naissance (`communeId`) :
+
+| Champ | Indicateur | Sans donnée |
+|---|---|---|
+| `i1PartTranscritsDansDelaiCible` | I1 : part des jugements transcrits dans le délai cible, entre 0 et 1 | `null` |
+| `i2DelaiMedianJours` | I2 : délai médian, en jours, entre la détection et l'acte remis | `null` |
+| `i3ElevesClasseExamenSansActe` | I3 : élèves de CM2 sans acte remis à la date de référence (`dateReference`, aujourd'hui par défaut) | `0` |
+
+```json
+{
+  "communeId": null, "dateReference": "2026-11-09", "delaiCibleJours": 15,
+  "i1PartTranscritsDansDelaiCible": 0.5454545454545454,
+  "i2DelaiMedianJours": 75.0,
+  "i3ElevesClasseExamenSansActe": 26,
+  "dossiersParEtape": {"DETECTE": 7, "CERTIFICAT_OBTENU": 7, "DOSSIER_COMPLET": 6, "JUGEMENT_RENDU": 9, "TRANSCRIT": 6, "ACTE_REMIS": 5},
+  "dossiersEnRetard": 5, "totalDossiers": 40
+}
+```
+
+Ces valeurs sont celles des données de démonstration : 6 jugements transcrits dans le délai sur 11, médiane des délais 65, 70, 75, 80 et 90 jours.
+
 ## Erreurs
 
 Toutes les erreurs suivent le format `application/problem+json` (RFC 9457) :
@@ -158,7 +187,7 @@ Toutes les erreurs suivent le format `application/problem+json` (RFC 9457) :
 4. Faire avancer un dossier avec le compte du rôle de l'étape ; cette opération modifie son état et écrit un historique.
 5. Consulter les alertes et les indicateurs.
 
-Faire avancer un dossier et résoudre une alerte modifient les données ; ces opérations ne se défont pas.
+Importer des élèves, faire avancer un dossier, enregistrer ou résoudre une alerte modifient les données ; ces opérations ne se défont pas.
 
 ## Données de démonstration
 
