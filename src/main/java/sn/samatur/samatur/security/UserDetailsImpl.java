@@ -24,6 +24,12 @@ public class UserDetailsImpl implements UserDetails {
     /** Compte actif : un compte désactivé ne peut pas se connecter (RG-15). */
     private boolean actif = true;
 
+    /** Rôle et structure de rattachement, lus en base et jamais dans la requête (RG-16). */
+    private String role;
+    private Long ecoleId;
+    private Long centreEtatCivilId;
+    private Long tribunalInstanceId;
+
     public UserDetailsImpl(Long id, String username, String password,
                            Collection<? extends GrantedAuthority> authorities) {
         this.id = id;
@@ -43,11 +49,31 @@ public class UserDetailsImpl implements UserDetails {
                 utilisateur.getMotDePasseHash(),
                 authorities);
         details.actif = Boolean.TRUE.equals(utilisateur.getActif());
+        details.role = utilisateur.getRole();
+        details.ecoleId = utilisateur.getEcoleId();
+        details.centreEtatCivilId = utilisateur.getCentreEtatCivilId();
+        details.tribunalInstanceId = utilisateur.getTribunalInstanceId();
         return details;
     }
 
     public Long getId() {
         return id;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public Long getEcoleId() {
+        return ecoleId;
+    }
+
+    public Long getCentreEtatCivilId() {
+        return centreEtatCivilId;
+    }
+
+    public Long getTribunalInstanceId() {
+        return tribunalInstanceId;
     }
 
     @Override
