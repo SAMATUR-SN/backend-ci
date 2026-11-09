@@ -1,0 +1,7 @@
+# Profil de test : clé de test uniquement, jamais utilisée en déploiement.
+# La base est fournie par Testcontainers (@ServiceConnection).
+samatur:
+  jwt:
+    secret: "cle-de-test-uniquement-au-moins-32-caracteres-pour-hs256"
+    expiration: 3600000
+  delai-cible-jours: 15
