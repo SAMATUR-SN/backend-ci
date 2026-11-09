@@ -92,7 +92,7 @@ class ImportCsvServiceTest {
 
     @Test // RG-07 : les lignes invalides sont rejetées avec leur motif, les autres importées
     void importe_les_lignes_valides_et_rejette_le_doublon_et_la_commune_inconnue() {
-        lenient().when(eleves.existsByPrenomIgnoreCaseAndNomIgnoreCaseAndDateNaissanceAndEcoleId(
+        lenient().when(eleves.existsByPrenomIgnoreCaseAndNomIgnoreCaseAndDateNaissanceAndEcoleIdAndArchiveLeIsNull(
                 eq("Fatou"), eq("Sarr"), any(), eq(1L))).thenReturn(true);
         String csv = String.join("\n", ENTETE,
                 "Awa;Diouf;F;14/03/2014;non;Bambey;ECO-BAM-01;CM2;Mariama Sene;;;;",

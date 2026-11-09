@@ -21,6 +21,14 @@ Base URL par défaut : `http://localhost:8080`.
 
 Utiliser `.env.example` comme modèle pour définir les variables dans l'environnement de lancement, notamment `SPRING_DATASOURCE_PASSWORD` et `SAMATUR_JWT_SECRET`. Avec `compose.dev.yaml`, le fichier `.env` est lu par Docker Compose : `docker compose -f compose.dev.yaml up` lance la base et l'API. Depuis un IDE, Spring Boot ne charge pas ce fichier : définir les variables dans la configuration de lancement. Générer une clé JWT aléatoire d'au moins 32 octets et ne pas la partager ni la committer. Les fichiers `.env` sont ignorés par Git ; seul le modèle `.env.example` est versionné.
 
+## Lancer les tests
+
+```
+docker compose -f compose.dev.yaml run --rm backend ./mvnw clean verify
+```
+
+Les tests d'intégration démarrent une base PostgreSQL 18 jetable avec Testcontainers : Docker doit tourner (sur un agent Jenkins aussi). `mvn verify` produit le rapport de couverture JaCoCo dans `target/site/jacoco/` (`jacoco.xml` pour SonarQube, `index.html` à ouvrir dans un navigateur). Le test de connexion des quatre comptes de démo lit leurs mots de passe dans la variable `SAMATUR_DEMO_MOTS_DE_PASSE` (voir `.env.example`) ; sans elle, il est ignoré.
+
 ## Routes exposées
 
 Toutes les routes métier sont sous `/api`, en JSON, avec des champs en camelCase et des dates au format ISO (`2026-11-04`).
@@ -35,8 +43,11 @@ Toutes les routes métier sont sous `/api`, en JSON, avec des champs en camelCas
 | GET | `/api/referentiels/centres` | Connecté | `[{id, nom}]` |
 | GET | `/api/referentiels/tribunaux` | Connecté | `[{id, nom}]` |
 | POST | `/api/eleves/import` | Rôle ECOLE | fichier CSV en multipart, champ `file` ; rapport d'import (voir ci-dessous) |
-| GET | `/api/eleves` | Rôle ECOLE ou SUPERVISEUR | liste d'élèves (hors contrat initial) |
-| GET | `/api/eleves/{id}` | Rôle ECOLE ou SUPERVISEUR | un élève (hors contrat initial) |
+| GET | `/api/eleves` | Rôle ECOLE | élèves actifs de son école, paginés (fonction facultative) |
+| GET | `/api/eleves/{id}` | Rôle ECOLE | un élève de son école (fonction facultative) |
+| POST | `/api/eleves` | Rôle ECOLE | saisir un élève et créer son dossier `DETECTE` (fonction facultative) |
+| PUT | `/api/eleves/{id}` | Rôle ECOLE | modifier l'identité et le contact (fonction facultative) |
+| DELETE | `/api/eleves/{id}` | Rôle ECOLE | archiver l'élève, sans rien effacer (fonction facultative) |
 | GET | `/api/dossiers` | Connecté | page de résumés de dossiers (voir ci-dessous) |
 | GET | `/api/dossiers/{id}` | Connecté | dossier complet : élève, données de chaque étape, témoins, historique |
 | POST | `/api/dossiers/{id}/avancer` | Rôle autorisé pour l'étape visée | dossier complet mis à jour |
@@ -45,7 +56,7 @@ Toutes les routes métier sont sous `/api`, en JSON, avec des champs en camelCas
 | PATCH | `/api/alertes/{id}/resoudre` | Rôle ETAT_CIVIL | alerte résolue |
 | GET | `/api/indicateurs` | Connecté | I1, I2, I3, dossiers par étape et en retard ; filtres `communeId`, `dateReference` |
 
-Les élèves arrivent par l'import CSV : il n'y a ni création, ni modification, ni suppression unitaire d'un élève (décision du 09/11), et aucun dossier ni historique n'est jamais supprimé (RG-13).
+Dans le contrat de base, les élèves arrivent par l'import CSV (décision du 09/11). La gestion unitaire des élèves par le directeur d'école est une **fonction facultative**, hors du contrat initial (voir « Gérer les élèves de son école »). Aucun dossier ni historique n'est jamais supprimé physiquement (RG-13).
 
 ## Authentification
 
@@ -112,6 +123,24 @@ L'import est ligne à ligne : une ligne invalide est rejetée avec son numéro (
 ```
 
 Un fichier d'exemple est versionné dans `src/test/resources/import-exemple.csv` : Awa, l'élève du scénario de démo, et une ligne volontairement fausse.
+
+## Gérer les élèves de son école (fonction facultative)
+
+Ces routes ne font pas partie du contrat initial. Elles sont réservées au rôle ECOLE et limitées à l'école du compte connecté : un élève d'une autre école répond 404, pour ne pas révéler son existence ; les autres rôles reçoivent 403.
+
+- `GET /api/eleves?page=0&taille=20` : page d'élèves actifs de l'école, par nom et prénom.
+- `POST /api/eleves` : saisit un élève avec les mêmes règles que l'import CSV, puis crée son dossier `DETECTE` et sa première ligne d'historique, comme l'import. L'école est celle du compte, jamais une valeur envoyée. Réponse 201 ; doublon (même prénom, nom, date de naissance et école) : 409.
+- `PUT /api/eleves/{id}` : modifie l'identité et le contact. Une fois le dossier au-delà de `DETECTE`, nom, prénom, date de naissance et commune de naissance ne changent plus (409) ; le téléphone, la langue de contact ou la classe restent modifiables.
+- `DELETE /api/eleves/{id}` : archive l'élève (204), seulement tant que son dossier est à `DETECTE` ; au-delà, le dossier est suivi par l'état civil ou le tribunal et la route répond 409. Rien n'est effacé : l'élève et son dossier sortent des listes, des alertes et des indicateurs, et l'historique est conservé.
+
+```json
+{
+  "prenom": "Awa", "nom": "Diouf", "sexe": "F", "dateNaissance": "2014-03-14",
+  "dateNaissancePresumee": false, "communeNaissanceId": 1, "classe": "CM2",
+  "nomMere": "Mariama Sene", "nomPere": "Ibrahima Diouf",
+  "telephoneParent": "+221770000099", "langueContact": "WOLOF", "numeroIne": null
+}
+```
 
 ## Faire avancer un dossier
 

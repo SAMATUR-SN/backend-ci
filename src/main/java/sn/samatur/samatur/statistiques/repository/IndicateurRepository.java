@@ -20,7 +20,7 @@ public interface IndicateurRepository extends Repository<Dossier, Long> {
     @Query(value = """
             SELECT CAST(count(*) FILTER (WHERE d.date_transcription - d.date_jugement <= :delai) AS double precision)
                    / NULLIF(count(*), 0)
-            FROM dossier d JOIN eleve e ON e.id = d.eleve_id
+            FROM dossier d JOIN eleve e ON e.id = d.eleve_id AND e.archive_le IS NULL
             WHERE d.date_transcription IS NOT NULL
               AND (CAST(:communeId AS BIGINT) IS NULL OR e.commune_naissance_id = :communeId)
             """, nativeQuery = true)
@@ -29,7 +29,7 @@ public interface IndicateurRepository extends Repository<Dossier, Long> {
     /** I2 : délai médian, en jours, entre détection et acte remis ; null si aucun acte n'est remis. */
     @Query(value = """
             SELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY d.date_remise - d.date_detection)
-            FROM dossier d JOIN eleve e ON e.id = d.eleve_id
+            FROM dossier d JOIN eleve e ON e.id = d.eleve_id AND e.archive_le IS NULL
             WHERE d.etape = 'ACTE_REMIS'
               AND (CAST(:communeId AS BIGINT) IS NULL OR e.commune_naissance_id = :communeId)
             """, nativeQuery = true)
@@ -38,7 +38,7 @@ public interface IndicateurRepository extends Repository<Dossier, Long> {
     /** I3 : élèves de CM2 dont l'acte n'est pas remis à la date de référence (RG-12). */
     @Query(value = """
             SELECT count(*)
-            FROM dossier d JOIN eleve e ON e.id = d.eleve_id
+            FROM dossier d JOIN eleve e ON e.id = d.eleve_id AND e.archive_le IS NULL
             WHERE e.classe = 'CM2'
               AND (d.date_remise IS NULL OR d.date_remise > :reference)
               AND (CAST(:communeId AS BIGINT) IS NULL OR e.commune_naissance_id = :communeId)
@@ -48,7 +48,7 @@ public interface IndicateurRepository extends Repository<Dossier, Long> {
     /** Nombre de dossiers par étape : [etape, nombre]. */
     @Query(value = """
             SELECT d.etape, count(*)
-            FROM dossier d JOIN eleve e ON e.id = d.eleve_id
+            FROM dossier d JOIN eleve e ON e.id = d.eleve_id AND e.archive_le IS NULL
             WHERE (CAST(:communeId AS BIGINT) IS NULL OR e.commune_naissance_id = :communeId)
             GROUP BY d.etape
             """, nativeQuery = true)
@@ -57,7 +57,7 @@ public interface IndicateurRepository extends Repository<Dossier, Long> {
     /** RG-05 : dossiers à JUGEMENT_RENDU jugés avant la limite (aujourd'hui moins le délai cible). */
     @Query(value = """
             SELECT count(*)
-            FROM dossier d JOIN eleve e ON e.id = d.eleve_id
+            FROM dossier d JOIN eleve e ON e.id = d.eleve_id AND e.archive_le IS NULL
             WHERE d.etape = 'JUGEMENT_RENDU' AND d.date_jugement < :limite
               AND (CAST(:communeId AS BIGINT) IS NULL OR e.commune_naissance_id = :communeId)
             """, nativeQuery = true)

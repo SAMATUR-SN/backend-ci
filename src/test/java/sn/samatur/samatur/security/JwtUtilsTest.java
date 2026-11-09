@@ -49,6 +49,14 @@ class JwtUtilsTest {
         assertThat(jwt.validateJwtToken(jetonSansSignature)).isFalse();
     }
 
+    @Test // RG-14 : jeton expiré
+    void refuse_un_jeton_expire() {
+        String expire = new JwtUtils(SECRET, -1_000)
+                .generateJwtToken(User.withUsername("ecole1@samatur.sn").password("x").roles("ECOLE").build());
+
+        assertThat(jwt.validateJwtToken(expire)).isFalse();
+    }
+
     @Test
     void refuse_au_demarrage_une_cle_trop_courte_pour_HS256() {
         assertThatThrownBy(() -> new JwtUtils("trop-courte", 3_600_000)).isInstanceOf(WeakKeyException.class);

@@ -30,7 +30,7 @@ public interface DossierRepository extends JpaRepository<Dossier, Long>, JpaSpec
     List<Dossier> findAll(Specification<Dossier> spec, Sort sort);
 
     /** RG-05 : à cette étape et jugés avant la limite (aujourd'hui moins le délai cible). */
-    List<Dossier> findByEtapeAndDateJugementBeforeOrderByDateJugementAsc(StatutDossier etape, LocalDate limite);
+    List<Dossier> findByEtapeAndDateJugementBeforeAndEleveArchiveLeIsNullOrderByDateJugementAsc(StatutDossier etape, LocalDate limite);
 
     Optional<Dossier> findByEleveId(Long eleveId);
 
