@@ -25,6 +25,7 @@ Utiliser `.env.example` comme modèle pour définir les variables dans l'environ
 
 | Méthode | Route | Accès |
 |---|---|---|
+| GET | `/health` | Public ; répond `{"status":"UP"}` |
 | POST | `/api/auth/connexion` | Public |
 | GET | `/api/eleves` | Rôle ECOLE ou SUPERVISEUR |
 | GET | `/api/eleves/{id}` | Rôle ECOLE ou SUPERVISEUR |
@@ -36,11 +37,13 @@ Utiliser `.env.example` comme modèle pour définir les variables dans l'environ
 | GET | `/api/dossiers/{id}` | Rôle ECOLE, ETAT_CIVIL, TRIBUNAL ou SUPERVISEUR |
 | POST | `/api/dossiers/{id}/avancer` | Rôle ECOLE, ETAT_CIVIL ou TRIBUNAL |
 | GET | `/api/alertes` | Tout utilisateur authentifié |
-| POST | `/api/alertes/verifier` | Tout utilisateur authentifié |
-| PATCH | `/api/alertes/{id}/resoudre` | Tout utilisateur authentifié |
+| POST | `/api/alertes/verifier` | Rôle ETAT_CIVIL |
+| PATCH | `/api/alertes/{id}/resoudre` | Rôle ETAT_CIVIL |
 | GET | `/api/statistiques/dashboard` | Tout utilisateur authentifié |
 
-Les contrôles de rôle sont ceux déclarés dans les contrôleurs. L'authentification JWT est exigée pour toutes les routes sauf `/api/auth/**`, la documentation Swagger et `/actuator/**`.
+Les contrôles de rôle sont ceux déclarés dans les contrôleurs. L'authentification JWT est exigée pour toutes les routes sauf `/health`, `/api/auth/connexion` et la documentation Swagger. Sans jeton, ou avec un jeton expiré ou invalide, l'API répond 401 ; avec un rôle non autorisé, 403. Les jetons sont signés en HS256 et valables 8 heures.
+
+Une connexion refusée (identifiant inconnu, mauvais mot de passe ou compte désactivé) répond toujours 401 avec le même message, au format `application/problem+json`.
 
 ## Séquence conseillée
 
