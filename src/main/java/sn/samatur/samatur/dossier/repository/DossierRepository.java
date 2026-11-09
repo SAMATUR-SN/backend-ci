@@ -23,6 +23,13 @@ public interface DossierRepository extends JpaRepository<Dossier, Long>, JpaSpec
     Page<Dossier> findAll(Specification<Dossier> spec, Pageable pageable);
 
     Optional<Dossier> findByEleveId(Long eleveId);
+
+    boolean existsByEleveId(Long eleveId);
+
+    /** Numéro suivant des références ST-AAAA-NNNNNN (RG-08). */
+    @Query(value = "SELECT nextval('dossier_reference_seq')", nativeQuery = true)
+    long prochainNumero();
+
     List<Dossier> findByEtape(StatutDossier etape);
 
     long countByEtape(StatutDossier etape);
