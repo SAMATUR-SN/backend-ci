@@ -8,6 +8,8 @@ import sn.samatur.samatur.referentiel.entity.CentreEtatCivil;
 import sn.samatur.samatur.referentiel.entity.TribunalInstance;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import java.time.LocalDateTime;
 
 @Entity
@@ -50,8 +52,9 @@ public class Dossier {
     @Column(name = "date_jugement")
     private LocalDate dateJugement;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "type_audience")
-    private String typeAudience;
+    private TypeAudience typeAudience;
 
     @Column(name = "numero_acte")
     private String numeroActe;
@@ -72,6 +75,9 @@ public class Dossier {
     @ManyToOne
     @JoinColumn(name = "tribunal_instance_id")
     private TribunalInstance tribunalInstance;
+
+    @OneToMany(mappedBy = "dossier", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Temoin> temoins = new ArrayList<>();
 
     @Version
     private Long version;
