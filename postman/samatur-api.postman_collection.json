@@ -171,8 +171,23 @@
           "name": "Avancer un dossier",
           "request": {
             "method": "POST",
-            "description": "Operation avec effet de bord : fait avancer le dossier d'une etape et ecrit son historique.",
-            "url": "{{baseUrl}}/api/dossiers/{{dossierId}}/avancer"
+            "description": "Fait passer le dossier à l'étape suivante et écrit son historique (effet de bord). etapeCible doit être l'étape suivant l'étape courante ; la requête porte les champs exigés par cette étape :\n- CERTIFICAT_OBTENU (ETAT_CIVIL) : numeroCertificat, dateCertificat, centreEtatCivilId\n- DOSSIER_COMPLET (ECOLE) : preuveNaissance ; si TEMOINS, temoins = 2 x {nomComplet, numeroPiece}\n- JUGEMENT_RENDU (TRIBUNAL) : numeroJugement, dateJugement, tribunalId, typeAudience (ORDINAIRE, SPECIALE, FORAINE)\n- TRANSCRIT (ETAT_CIVIL) : numeroActe, anneeActe, dateTranscription\n- ACTE_REMIS (ECOLE) : dateRemise\ncommentaire est facultatif. Saut d'étape ou champ manquant : 422 ; étape déjà franchie : 409 ; rôle non autorisé : 403.",
+            "url": "{{baseUrl}}/api/dossiers/{{dossierId}}/avancer",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"etapeCible\": \"JUGEMENT_RENDU\",\n  \"numeroJugement\": \"1287/2026\",\n  \"dateJugement\": \"2026-11-03\",\n  \"tribunalId\": 1,\n  \"typeAudience\": \"FORAINE\",\n  \"commentaire\": \"Audience foraine de Bambey\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
           }
         }
       ]

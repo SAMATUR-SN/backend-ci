@@ -9,5 +9,5 @@ import java.util.List;
 
 @Repository
 public interface HistoriqueEtapeRepository extends JpaRepository<HistoriqueEtape, Long> {
-    List<HistoriqueEtape> findByDossierId(Long dossierId);
+    List<HistoriqueEtape> findByDossierIdOrderByDateHeureAscIdAsc(Long dossierId);
 }

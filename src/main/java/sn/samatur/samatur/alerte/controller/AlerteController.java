@@ -2,6 +2,7 @@ package sn.samatur.samatur.alerte.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
+import sn.samatur.samatur.commun.RessourceIntrouvableException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.Operation;
@@ -45,7 +46,7 @@ public class AlerteController {
     @Operation(summary = "Résoudre une alerte")
     public ResponseEntity<Alerte> resoudreAlerte(@PathVariable Long id) {
         Alerte alerte = alerteRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Alerte introuvable avec l'id : " + id));
+                .orElseThrow(() -> new RessourceIntrouvableException("Alerte " + id + " introuvable."));
         
         alerte.setResolue(true);
         Alerte alerteSauvegardee = alerteRepository.save(alerte);
