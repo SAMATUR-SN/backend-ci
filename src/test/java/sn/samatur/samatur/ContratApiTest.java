@@ -20,7 +20,6 @@ import static org.hamcrest.Matchers.matchesPattern;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -137,30 +136,28 @@ class ContratApiTest extends TestIntegration {
                 .andExpect(jsonPath("$", not(hasKey("token"))));
     }
 
-    @Test // 5.4, 5.7, décision du 09/11
-    void les_routes_hors_contrat_ont_disparu() throws Exception {
-        UserDetails ecole = comptes.loadUserByUsername("ecole1@samatur.sn");
-        mvc.perform(delete("/api/eleves/1").with(user(ecole))).andExpect(status().isMethodNotAllowed());
-        mvc.perform(post("/api/eleves").with(user(ecole)).contentType(MediaType.APPLICATION_JSON).content("{}"))
-                .andExpect(status().isMethodNotAllowed());
+    @Test // 5.7 : le tableau de bord s'appelle désormais /api/indicateurs
+    void l_ancien_tableau_de_bord_a_laisse_place_aux_indicateurs() throws Exception {
         mvc.perform(get("/api/statistiques/dashboard").with(user(superviseur()))).andExpect(status().isNotFound());
         mvc.perform(get("/api/indicateurs").with(user(superviseur()))).andExpect(status().isOk());
     }
 
     @Test // 3.9 : sans open-in-view, les réponses sont des DTO construits dans les transactions
     void les_alertes_et_les_eleves_se_serialisent_sans_session_ouverte() throws Exception {
+        UserDetails ecole = comptes.loadUserByUsername("ecole1@samatur.sn");
         mvc.perform(get("/api/alertes").with(user(superviseur()))).andExpect(status().isOk());
-        mvc.perform(get("/api/eleves/1").with(user(superviseur())))
+        mvc.perform(get("/api/eleves/1").with(user(ecole)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.ecole").value("École Publique Bambey Station 1"))
                 .andExpect(jsonPath("$", not(hasKey("professionPere"))));
-        mvc.perform(get("/api/eleves/9999").with(user(superviseur()))).andExpect(status().isNotFound());
+        mvc.perform(get("/api/eleves/9999").with(user(ecole))).andExpect(status().isNotFound());
     }
 
-    @Test // RG-13 : aucun dossier, élève ni historique n'est supprimé physiquement
-    void aucune_route_de_l_api_ne_supprime() throws Exception {
+    @Test // RG-13 : la seule route DELETE est l'archivage d'un élève, qui n'efface rien (EleveEcoleTest)
+    void la_seule_route_delete_est_l_archivage_d_un_eleve() throws Exception {
         String specification = mvc.perform(get("/v3/api-docs")).andReturn().getResponse().getContentAsString();
-        org.assertj.core.api.Assertions.assertThat(specification).doesNotContain("\"delete\"");
+        org.assertj.core.api.Assertions.assertThat(specification.split("\"delete\"", -1)).hasSize(2);
+        mvc.perform(get("/v3/api-docs")).andExpect(jsonPath("$.paths['/api/eleves/{id}']", hasKey("delete")));
     }
 
     @Test // Swagger reste public et ne décrit plus les routes retirées
@@ -170,7 +167,6 @@ class ContratApiTest extends TestIntegration {
                 .andExpect(jsonPath("$.paths", hasKey("/api/auth/moi")))
                 .andExpect(jsonPath("$.paths", hasKey("/api/indicateurs")))
                 .andExpect(jsonPath("$.paths", hasKey("/api/referentiels/tribunaux")))
-                .andExpect(jsonPath("$.paths", not(hasKey("/api/statistiques/dashboard"))))
-                .andExpect(jsonPath("$.paths['/api/eleves']", not(hasKey("post"))));
+                .andExpect(jsonPath("$.paths", not(hasKey("/api/statistiques/dashboard"))));
     }
 }
