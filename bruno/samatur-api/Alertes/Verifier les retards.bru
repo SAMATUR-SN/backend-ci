@@ -12,3 +12,8 @@ post {
 headers {
   Authorization: Bearer {{token}}
 }
+
+docs {
+  Rôle ETAT_CIVIL. Enregistre une alerte pour chaque dossier en retard qui n'en a pas encore.
+  Réponse : {"alertesCreees": N} ; un second appel renvoie 0.
+}
