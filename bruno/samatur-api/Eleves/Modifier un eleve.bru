@@ -1,0 +1,34 @@
+meta {
+  name: Modifier un eleve
+  type: http
+  seq: 8
+}
+
+put {
+  url: {{baseUrl}}/api/eleves/{{eleveId}}
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}
+
+body:json {
+  {
+    "prenom": "Mamadou",
+    "nom": "Diop",
+    "sexe": "M",
+    "dateNaissance": "2014-05-12",
+    "communeNaissanceId": 1,
+    "classe": "CM2",
+    "nomMere": "Aissatou Ba",
+    "telephoneParent": "+221770000001",
+    "langueContact": "WOLOF"
+  }
+}
+
+docs {
+  Fonction facultative, hors du contrat initial. Rôle ECOLE, élève de son école (sinon 404).
+  Une fois le dossier au-delà de DETECTE, nom, prénom et date de naissance ne changent plus : 409.
+}

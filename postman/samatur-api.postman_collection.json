@@ -111,14 +111,16 @@
           "name": "Lister les eleves",
           "request": {
             "method": "GET",
-            "url": "{{baseUrl}}/api/eleves"
+            "url": "{{baseUrl}}/api/eleves?page=0&taille=20",
+            "description": "Fonction facultative, hors du contrat initial. Rôle ECOLE, limité à son école (élève d'une autre école : 404). Page d'élèves actifs de l'école, par nom et prénom."
           }
         },
         {
           "name": "Obtenir un eleve",
           "request": {
             "method": "GET",
-            "url": "{{baseUrl}}/api/eleves/{{eleveId}}"
+            "url": "{{baseUrl}}/api/eleves/{{eleveId}}",
+            "description": "Fonction facultative, hors du contrat initial. Rôle ECOLE, limité à son école (élève d'une autre école : 404). "
           }
         },
         {
@@ -137,6 +139,60 @@
               ]
             },
             "url": "{{baseUrl}}/api/eleves/import"
+          }
+        },
+        {
+          "name": "Creer un eleve",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/eleves",
+            "description": "Fonction facultative, hors du contrat initial. Rôle ECOLE, limité à son école (élève d'une autre école : 404). Mêmes règles que l'import CSV ; crée aussi le dossier DETECTE. Réponse 201 ; doublon : 409.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prenom\": \"Awa\",\n  \"nom\": \"Diouf\",\n  \"sexe\": \"F\",\n  \"dateNaissance\": \"2014-03-14\",\n  \"dateNaissancePresumee\": false,\n  \"communeNaissanceId\": 1,\n  \"classe\": \"CM2\",\n  \"nomMere\": \"Mariama Sene\",\n  \"nomPere\": \"Ibrahima Diouf\",\n  \"telephoneParent\": \"+221770000099\",\n  \"langueContact\": \"WOLOF\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Modifier un eleve",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/eleves/{{eleveId}}",
+            "description": "Fonction facultative, hors du contrat initial. Rôle ECOLE, limité à son école (élève d'une autre école : 404). Une fois le dossier au-delà de DETECTE, nom, prénom et date de naissance ne changent plus : 409.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prenom\": \"Mamadou\",\n  \"nom\": \"Diop\",\n  \"sexe\": \"M\",\n  \"dateNaissance\": \"2014-05-12\",\n  \"communeNaissanceId\": 1,\n  \"classe\": \"CM2\",\n  \"nomMere\": \"Aissatou Ba\",\n  \"telephoneParent\": \"+221770000001\",\n  \"langueContact\": \"WOLOF\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Archiver un eleve",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/eleves/{{eleveId}}",
+            "description": "Fonction facultative, hors du contrat initial. Rôle ECOLE, limité à son école (élève d'une autre école : 404). Archivage, jamais une suppression physique (RG-13) : l'élève et son dossier sortent des listes, des alertes et des indicateurs ; l'historique est conservé. Réponse 204."
           }
         }
       ]
