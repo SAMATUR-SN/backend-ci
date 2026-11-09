@@ -1,0 +1,14 @@
+meta {
+  name: Indicateurs
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/indicateurs
+  body: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}

@@ -27,11 +27,12 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('Connexion reussie et JWT recu', function () {",
+                  "pm.test('Connexion réussie et jeton reçu', function () {",
                   "  pm.response.to.have.status(200);",
                   "  const body = pm.response.json();",
-                  "  pm.expect(body).to.have.property('token').that.is.a('string').and.not.empty;",
-                  "  pm.collectionVariables.set('token', body.token);",
+                  "  pm.expect(body).to.have.property('jeton').that.is.a('string').and.not.empty;",
+                  "  pm.expect(body.utilisateur).to.have.property('role');",
+                  "  pm.collectionVariables.set('token', body.jeton);",
                   "});"
                 ]
               }
@@ -59,6 +60,47 @@
             },
             "url": "{{baseUrl}}/api/auth/connexion"
           }
+        },
+        {
+          "name": "Utilisateur connecte",
+          "request": {
+            "method": "GET",
+            "description": "Rôle et structure de l'utilisateur connecté.",
+            "url": "{{baseUrl}}/api/auth/moi"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Referentiels",
+      "item": [
+        {
+          "name": "Lister les communes",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/referentiels/communes"
+          }
+        },
+        {
+          "name": "Lister les ecoles",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/referentiels/ecoles"
+          }
+        },
+        {
+          "name": "Lister les centres",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/referentiels/centres"
+          }
+        },
+        {
+          "name": "Lister les tribunaux",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/referentiels/tribunaux"
+          }
         }
       ]
     },
@@ -76,57 +118,6 @@
           "name": "Obtenir un eleve",
           "request": {
             "method": "GET",
-            "url": "{{baseUrl}}/api/eleves/{{eleveId}}"
-          }
-        },
-        {
-          "name": "Creer un eleve",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"numeroIne\": null,\n  \"sexe\": \"M\",\n  \"nom\": \"Exemple\",\n  \"prenom\": \"Eleve\",\n  \"dateNaissance\": \"2014-01-15\",\n  \"dateNaissancePresumee\": false,\n  \"classe\": \"CM2\",\n  \"ecole\": { \"id\": 1 },\n  \"communeNaissance\": { \"id\": 1 },\n  \"nomPere\": \"Parent exemple\",\n  \"nomMere\": \"Parent exemple\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": "{{baseUrl}}/api/eleves"
-          }
-        },
-        {
-          "name": "Modifier un eleve",
-          "request": {
-            "method": "PUT",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"numeroIne\": null,\n  \"sexe\": \"M\",\n  \"nom\": \"Exemple modifie\",\n  \"prenom\": \"Eleve\",\n  \"dateNaissance\": \"2014-01-15\",\n  \"dateNaissancePresumee\": false,\n  \"classe\": \"CM2\",\n  \"ecole\": { \"id\": 1 },\n  \"communeNaissance\": { \"id\": 1 },\n  \"nomPere\": \"Parent exemple\",\n  \"nomMere\": \"Parent exemple\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": "{{baseUrl}}/api/eleves/{{eleveId}}"
-          }
-        },
-        {
-          "name": "Supprimer un eleve",
-          "request": {
-            "method": "DELETE",
             "url": "{{baseUrl}}/api/eleves/{{eleveId}}"
           }
         },
@@ -157,7 +148,8 @@
           "name": "Lister les dossiers",
           "request": {
             "method": "GET",
-            "url": "{{baseUrl}}/api/dossiers"
+            "url": "{{baseUrl}}/api/dossiers?etape=JUGEMENT_RENDU&enRetard=true&page=0&taille=20",
+            "description": "Filtres facultatifs : etape, communeId, ecoleId, classe, enRetard, q. Pagination : page (à partir de 0), taille (100 au maximum). tri : dateDetection,desc par défaut."
           }
         },
         {
@@ -219,13 +211,13 @@
       ]
     },
     {
-      "name": "Statistiques",
+      "name": "Indicateurs",
       "item": [
         {
-          "name": "Dashboard",
+          "name": "Indicateurs",
           "request": {
             "method": "GET",
-            "url": "{{baseUrl}}/api/statistiques/dashboard"
+            "url": "{{baseUrl}}/api/indicateurs"
           }
         }
       ]

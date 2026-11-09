@@ -1,0 +1,14 @@
+meta {
+  name: Utilisateur connecte
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/auth/moi
+  body: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}
