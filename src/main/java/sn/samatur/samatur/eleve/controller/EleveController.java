@@ -63,8 +63,8 @@ public class EleveController {
 
     @PutMapping("/{id}")
     @Operation(summary = "Modifier l'identité et le contact d'un élève",
-            description = "Facultatif. Une fois le dossier au-delà de DETECTE, nom, prénom et date de naissance "
-                    + "ne changent plus : 409.")
+            description = "Facultatif. Une fois le dossier au-delà de DETECTE, nom, prénom, date de naissance et "
+                    + "commune de naissance ne changent plus : 409.")
     public EleveDto modifier(@PathVariable Long id, @Valid @RequestBody EleveRequest requete,
                              @AuthenticationPrincipal UserDetailsImpl qui) {
         return eleveService.modifier(id, requete, qui);
@@ -74,7 +74,8 @@ public class EleveController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Archiver un élève",
             description = "Facultatif. Archivage, jamais une suppression physique (RG-13) : l'élève et son dossier "
-                    + "sortent des listes, des alertes et des indicateurs ; l'historique est conservé.")
+                    + "sortent des listes, des alertes et des indicateurs ; l'historique est conservé. Seulement "
+                    + "tant que le dossier est à DETECTE : au-delà, 409.")
     public void archiver(@PathVariable Long id, @AuthenticationPrincipal UserDetailsImpl qui) {
         eleveService.archiver(id, qui);
     }

@@ -85,21 +85,20 @@ public class EleveService {
     }
 
     /**
-     * Modifie l'identité et le contact. Règle proposée, à valider par Dri : une fois le dossier au-delà
-     * de DETECTE, nom, prénom et date de naissance ne changent plus (409), car le certificat et le
-     * jugement ont été établis à cette identité.
+     * Modifie l'identité et le contact. Décision de Dri du 09/11 : une fois le dossier au-delà de DETECTE,
+     * nom, prénom, date de naissance et commune de naissance ne changent plus (409). Le certificat et le
+     * jugement ont été établis à cette identité, et la commune désigne le centre d'état civil compétent.
      */
     @Transactional
     public EleveDto modifier(Long id, EleveRequest r, UserDetailsImpl qui) {
         Eleve e = trouverDansEcole(id, qui);
         boolean identiteModifiee = !Objects.equals(e.getNom(), r.nom().trim())
                 || !Objects.equals(e.getPrenom(), r.prenom().trim())
-                || !Objects.equals(e.getDateNaissance(), r.dateNaissance());
-        boolean dossierAvance = dossiers.findByEleveId(id)
-                .map(d -> d.getEtape() != StatutDossier.DETECTE).orElse(false);
-        if (identiteModifiee && dossierAvance) {
-            throw new ConflitException("Le dossier a dépassé l'étape DETECTE : nom, prénom et date de naissance "
-                    + "ne peuvent plus changer.");
+                || !Objects.equals(e.getDateNaissance(), r.dateNaissance())
+                || !Objects.equals(e.getCommuneNaissance().getId(), r.communeNaissanceId());
+        if (identiteModifiee && dossierAuDelaDeDetecte(id)) {
+            throw new ConflitException("Le dossier a dépassé l'étape DETECTE : nom, prénom, date de naissance "
+                    + "et commune de naissance ne peuvent plus changer.");
         }
         if (eleveRepository.existsByPrenomIgnoreCaseAndNomIgnoreCaseAndDateNaissanceAndEcoleIdAndArchiveLeIsNullAndIdNot(
                 r.prenom().trim(), r.nom().trim(), r.dateNaissance(), ecoleDe(qui), id)) {
@@ -110,10 +109,23 @@ public class EleveService {
         return EleveDto.de(e);
     }
 
-    /** Archive l'élève : il sort, avec son dossier, des listes, des alertes et des indicateurs ; rien n'est effacé. */
+    /**
+     * Archive l'élève : il sort, avec son dossier, des listes, des alertes et des indicateurs ; rien n'est
+     * effacé. Décision de Dri du 09/11 : seulement tant que le dossier est à DETECTE. Au-delà, l'état civil
+     * ou le tribunal l'ont pris en charge, et l'école ne peut plus le faire disparaître (409).
+     */
     @Transactional
     public void archiver(Long id, UserDetailsImpl qui) {
-        trouverDansEcole(id, qui).setArchiveLe(LocalDateTime.now(horloge));
+        Eleve e = trouverDansEcole(id, qui);
+        if (dossierAuDelaDeDetecte(id)) {
+            throw new ConflitException("Le dossier a dépassé l'étape DETECTE : il est suivi par l'état civil "
+                    + "ou le tribunal, l'élève ne peut plus être archivé.");
+        }
+        e.setArchiveLe(LocalDateTime.now(horloge));
+    }
+
+    private boolean dossierAuDelaDeDetecte(Long eleveId) {
+        return dossiers.findByEleveId(eleveId).map(d -> d.getEtape() != StatutDossier.DETECTE).orElse(false);
     }
 
     private void appliquer(Eleve e, EleveRequest r) {
