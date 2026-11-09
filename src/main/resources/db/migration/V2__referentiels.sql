@@ -4,7 +4,7 @@
 
 -- 1. Insertion des Communes du département de Bambey
 INSERT INTO commune (id, nom, departement, region) VALUES
-(1, 'Bambey (Commune)', 'Bambey', 'Diourbel'),
+(1, 'Bambey', 'Bambey', 'Diourbel'),
 (2, 'Ngoye', 'Bambey', 'Diourbel'),
 (3, 'Baba Garage', 'Bambey', 'Diourbel'),
 (4, 'Ndangalma', 'Bambey', 'Diourbel');
