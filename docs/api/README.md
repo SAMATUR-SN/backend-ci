@@ -34,12 +34,28 @@ Utiliser `.env.example` comme modèle pour définir les variables dans l'environ
 | DELETE | `/api/eleves/{id}` | Rôle ECOLE ou SUPERVISEUR |
 | POST | `/api/eleves/import` | Rôle ECOLE ou SUPERVISEUR ; multipart `file` |
 | GET | `/api/dossiers` | Rôle ECOLE, ETAT_CIVIL, TRIBUNAL ou SUPERVISEUR |
-| GET | `/api/dossiers/{id}` | Rôle ECOLE, ETAT_CIVIL, TRIBUNAL ou SUPERVISEUR |
-| POST | `/api/dossiers/{id}/avancer` | Rôle ECOLE, ETAT_CIVIL ou TRIBUNAL |
+| GET | `/api/dossiers/{id}` | Rôle ECOLE, ETAT_CIVIL, TRIBUNAL ou SUPERVISEUR ; dossier complet avec historique |
+| POST | `/api/dossiers/{id}/avancer` | Rôle autorisé pour l'étape visée (voir ci-dessous) |
 | GET | `/api/alertes` | Tout utilisateur authentifié |
 | POST | `/api/alertes/verifier` | Rôle ETAT_CIVIL |
 | PATCH | `/api/alertes/{id}/resoudre` | Rôle ETAT_CIVIL |
 | GET | `/api/statistiques/dashboard` | Tout utilisateur authentifié |
+
+## Faire avancer un dossier
+
+`POST /api/dossiers/{id}/avancer` reçoit `etapeCible`, qui doit être l'étape suivant l'étape courante, et les champs exigés par cette étape. Le rôle vient du jeton, jamais de la requête.
+
+| Étape visée | Rôle | Champs obligatoires |
+|---|---|---|
+| `CERTIFICAT_OBTENU` | ETAT_CIVIL | `numeroCertificat`, `dateCertificat`, `centreEtatCivilId` |
+| `DOSSIER_COMPLET` | ECOLE | `preuveNaissance` ; si `TEMOINS`, `temoins` = deux `{nomComplet, numeroPiece}` |
+| `JUGEMENT_RENDU` | TRIBUNAL | `numeroJugement`, `dateJugement`, `tribunalId`, `typeAudience` (`ORDINAIRE`, `SPECIALE`, `FORAINE`) |
+| `TRANSCRIT` | ETAT_CIVIL | `numeroActe`, `anneeActe`, `dateTranscription` |
+| `ACTE_REMIS` | ECOLE | `dateRemise` |
+
+`commentaire` est facultatif et rejoint l'historique. Les dates doivent se suivre (détection, certificat, jugement, transcription, remise) et aucune ne peut être dans le futur. La réponse est le dossier complet, comme `GET /api/dossiers/{id}` : élève, données de chaque étape, témoins, historique, et `enRetard` calculé avec le délai cible.
+
+Toutes les erreurs suivent le format `application/problem+json` : 400 JSON illisible ou valeur inconnue ; 403 rôle non autorisé ; 404 dossier inexistant ; 409 étape déjà franchie ou dossier terminé ; 422 saut d'étape, champ manquant (liste dans `erreurs`) ou dates incohérentes.
 
 Les contrôles de rôle sont ceux déclarés dans les contrôleurs. L'authentification JWT est exigée pour toutes les routes sauf `/health`, `/api/auth/connexion` et la documentation Swagger. Sans jeton, ou avec un jeton expiré ou invalide, l'API répond 401 ; avec un rôle non autorisé, 403. Les jetons sont signés en HS256 et valables 8 heures.
 
