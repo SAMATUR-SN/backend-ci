@@ -16,7 +16,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.everyItem;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.not;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -115,13 +114,14 @@ class EleveEcoleTest extends TestIntegration {
 
     @Test // Règle proposée : l'identité ne change plus une fois le dossier au-delà de DETECTE
     void l_identite_ne_change_plus_apres_detecte_mais_le_contact_si() throws Exception {
-        // Élève 1 (Mamadou Diop) : dossier DETECTE, l'identité peut changer
+        // Élève 1 (Mamadou Diop) : dossier DETECTE, l'identité et la commune de naissance peuvent changer
         mvc.perform(put("/api/eleves/1").with(user(ecole())).contentType(MediaType.APPLICATION_JSON).content("""
                         {"prenom":"Mamadou","nom":"Diop Corrigé","sexe":"M","dateNaissance":"2014-05-12",
-                         "communeNaissanceId":1,"classe":"CM2","nomMere":"Aissatou Ba"}
+                         "communeNaissanceId":2,"classe":"CM2","nomMere":"Aissatou Ba"}
                         """))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.nom").value("Diop Corrigé"));
+                .andExpect(jsonPath("$.nom").value("Diop Corrigé"))
+                .andExpect(jsonPath("$.communeNaissanceId").value(2));
 
         // Élève 8 (Mariama Ba) : dossier CERTIFICAT_OBTENU, le nom ne change plus…
         mvc.perform(put("/api/eleves/8").with(user(ecole())).contentType(MediaType.APPLICATION_JSON).content("""
@@ -129,6 +129,14 @@ class EleveEcoleTest extends TestIntegration {
                          "communeNaissanceId":1,"classe":"CM2","nomMere":"Fatimata Sy"}
                         """))
                 .andExpect(status().isConflict());
+        // … ni la commune de naissance, qui désigne le centre d'état civil compétent (décision du 09/11)…
+        mvc.perform(put("/api/eleves/8").with(user(ecole())).contentType(MediaType.APPLICATION_JSON).content("""
+                        {"prenom":"Mariama","nom":"Ba","sexe":"F","dateNaissance":"2014-04-03",
+                         "communeNaissanceId":2,"classe":"CM2","nomMere":"Fatimata Sy"}
+                        """))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.detail").value("Le dossier a dépassé l'étape DETECTE : nom, prénom, "
+                        + "date de naissance et commune de naissance ne peuvent plus changer."));
         // … mais le téléphone et la langue de contact, si
         mvc.perform(put("/api/eleves/8").with(user(ecole())).contentType(MediaType.APPLICATION_JSON).content("""
                         {"prenom":"Mariama","nom":"Ba","sexe":"F","dateNaissance":"2014-04-03",
@@ -146,21 +154,34 @@ class EleveEcoleTest extends TestIntegration {
         String avant = jdbc.queryForObject(totaux, String.class);
         UserDetails superviseur = comptes.loadUserByUsername("superviseur@samatur.sn");
 
-        // Élève 22 : école 1, dossier en retard (jugé il y a 45 jours)
-        mvc.perform(delete("/api/eleves/22").with(user(ecole()))).andExpect(status().isNoContent());
+        // Élève 2 (Fatou Sarr) : école 1, CM2, dossier encore à DETECTE
+        mvc.perform(delete("/api/eleves/2").with(user(ecole()))).andExpect(status().isNoContent());
         // Le test tourne dans une seule transaction : on pousse les écritures en base avant de lire en SQL
         entityManager.flush();
 
         assertThat(jdbc.queryForObject(totaux, String.class)).isEqualTo(avant);
-        assertThat(compter("SELECT count(*) FROM eleve WHERE id = 22 AND archive_le IS NOT NULL")).isEqualTo(1);
-        mvc.perform(get("/api/eleves/22").with(user(ecole()))).andExpect(status().isNotFound());
-        mvc.perform(delete("/api/eleves/22").with(user(ecole()))).andExpect(status().isNotFound());
-        mvc.perform(get("/api/dossiers/22").with(user(superviseur))).andExpect(status().isNotFound());
+        assertThat(compter("SELECT count(*) FROM eleve WHERE id = 2 AND archive_le IS NOT NULL")).isEqualTo(1);
+        mvc.perform(get("/api/eleves/2").with(user(ecole()))).andExpect(status().isNotFound());
+        mvc.perform(delete("/api/eleves/2").with(user(ecole()))).andExpect(status().isNotFound());
+        mvc.perform(get("/api/dossiers/2").with(user(superviseur))).andExpect(status().isNotFound());
         mvc.perform(get("/api/dossiers").with(user(superviseur))).andExpect(jsonPath("$.totalElements").value(39));
-        mvc.perform(get("/api/alertes").with(user(superviseur)))
-                .andExpect(jsonPath("$[*].id", not(hasItem(22))));
         mvc.perform(get("/api/indicateurs").with(user(superviseur)))
                 .andExpect(jsonPath("$.totalDossiers").value(39))
-                .andExpect(jsonPath("$.dossiersEnRetard").value(4));
+                .andExpect(jsonPath("$.dossiersParEtape.DETECTE").value(6))
+                .andExpect(jsonPath("$.i3ElevesClasseExamenSansActe").value(25));
+    }
+
+    @Test // Décision du 09/11 : on n'archive plus un élève dont le dossier a dépassé DETECTE
+    void un_eleve_dont_le_dossier_a_depasse_detecte_ne_s_archive_pas() throws Exception {
+        // Élève 22 : école 1, dossier à JUGEMENT_RENDU, en retard
+        mvc.perform(delete("/api/eleves/22").with(user(ecole())))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.detail").value("Le dossier a dépassé l'étape DETECTE : il est suivi par "
+                        + "l'état civil ou le tribunal, l'élève ne peut plus être archivé."));
+        entityManager.flush();
+
+        assertThat(compter("SELECT count(*) FROM eleve WHERE id = 22 AND archive_le IS NULL")).isEqualTo(1);
+        mvc.perform(get("/api/alertes").with(user(comptes.loadUserByUsername("superviseur@samatur.sn"))))
+                .andExpect(jsonPath("$[*].id", hasItem(22)));
     }
 }
