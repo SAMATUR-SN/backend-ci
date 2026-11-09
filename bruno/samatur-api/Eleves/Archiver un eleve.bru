@@ -1,0 +1,21 @@
+meta {
+  name: Archiver un eleve
+  type: http
+  seq: 9
+}
+
+delete {
+  url: {{baseUrl}}/api/eleves/{{eleveId}}
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}
+
+docs {
+  Fonction facultative, hors du contrat initial. Rôle ECOLE. Archivage, jamais une suppression physique (RG-13) :
+  l'élève et son dossier sortent des listes, des alertes et des indicateurs ; l'historique est conservé. Réponse 204.
+  Seulement tant que le dossier est à DETECTE ; au-delà : 409.
+}

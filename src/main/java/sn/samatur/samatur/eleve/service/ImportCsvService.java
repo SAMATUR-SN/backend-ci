@@ -232,7 +232,7 @@ public class ImportCsvService {
 
     /** RG-07, et unicité du numéro INE. Les lignes déjà importées du même fichier sont prises en compte. */
     private void refuserLesDoublons(Eleve e) {
-        if (eleves.existsByPrenomIgnoreCaseAndNomIgnoreCaseAndDateNaissanceAndEcoleId(
+        if (eleves.existsByPrenomIgnoreCaseAndNomIgnoreCaseAndDateNaissanceAndEcoleIdAndArchiveLeIsNull(
                 e.getPrenom(), e.getNom(), e.getDateNaissance(), e.getEcole().getId())) {
             throw new LigneInvalideException("doublon : un élève de même prénom, nom, date de naissance "
                     + "et école existe déjà");

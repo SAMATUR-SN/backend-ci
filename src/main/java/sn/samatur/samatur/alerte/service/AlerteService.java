@@ -53,13 +53,14 @@ public class AlerteService {
     /** Les dossiers en retard, du plus ancien jugement au plus récent. */
     @Transactional(readOnly = true)
     public List<Dossier> dossiersEnRetard() {
-        return dossiers.findByEtapeAndDateJugementBeforeOrderByDateJugementAsc(StatutDossier.JUGEMENT_RENDU, limite());
+        return dossiers.findByEtapeAndDateJugementBeforeAndEleveArchiveLeIsNullOrderByDateJugementAsc(StatutDossier.JUGEMENT_RENDU, limite());
     }
 
     /** GET /api/alertes : les dossiers en retard en résumés, filtrés par commune de naissance si demandé. */
     @Transactional(readOnly = true)
     public List<DossierResumeDto> listerEnRetard(Long communeId) {
         Specification<Dossier> spec = Specification.allOf(
+                DossierSpecifications.actif(),
                 DossierSpecifications.enRetard(true, limite()),
                 DossierSpecifications.commune(communeId));
         LocalDate aujourdhui = LocalDate.now(horloge);
