@@ -47,9 +47,6 @@ public class DossierService {
                 nouvelleEtape = StatutDossier.CERTIFICAT_OBTENU;
                 break;
             case CERTIFICAT_OBTENU:
-                nouvelleEtape = StatutDossier.CERTIFICAT_ETABLI;
-                break;
-            case CERTIFICAT_ETABLI:
                 nouvelleEtape = StatutDossier.DOSSIER_COMPLET;
                 break;
             case DOSSIER_COMPLET:
@@ -74,6 +71,7 @@ public class DossierService {
         // Enregistrement de la transition dans l'historique
         HistoriqueEtape historique = new HistoriqueEtape();
         historique.setDossier(dossierSauvegarde);
+        historique.setEtapeDepart(ancienneEtape);
         historique.setEtapeArrivee(nouvelleEtape);
         historique.setDateHeure(LocalDateTime.now());
         historique.setCommentaire("Transition de " + ancienneEtape + " vers " + nouvelleEtape);

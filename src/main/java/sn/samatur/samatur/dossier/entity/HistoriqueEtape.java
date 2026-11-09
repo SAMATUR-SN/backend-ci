@@ -21,6 +21,10 @@ public class HistoriqueEtape {
     private Dossier dossier;
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "etape_depart")
+    private StatutDossier etapeDepart;
+
+    @Enumerated(EnumType.STRING)
     @Column(name = "etape_arrivee", nullable = false)
     private StatutDossier etapeArrivee;
 

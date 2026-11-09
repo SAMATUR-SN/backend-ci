@@ -9,5 +9,5 @@ import java.util.List;
 @Repository
 public interface AlerteRepository extends JpaRepository<Alerte, Long> {
     List<Alerte> findByResolueFalse();
-    boolean existsByDossierIdAndResolueFalse(Long dossierId);
+    boolean existsByDossierId(Long dossierId);
 }
