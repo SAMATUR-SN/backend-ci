@@ -12,6 +12,11 @@ public final class DossierSpecifications {
     private DossierSpecifications() {
     }
 
+    /** Seulement les dossiers des élèves actifs : un élève archivé sort des listes et des alertes. */
+    public static Specification<Dossier> actif() {
+        return (r, q, cb) -> cb.isNull(r.get("eleve").get("archiveLe"));
+    }
+
     public static Specification<Dossier> etape(StatutDossier etape) {
         return (r, q, cb) -> etape == null ? null : cb.equal(r.get("etape"), etape);
     }
