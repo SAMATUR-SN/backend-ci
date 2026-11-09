@@ -1,0 +1,36 @@
+meta {
+  name: Creer un eleve
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/api/eleves
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}
+
+body:json {
+  {
+    "prenom": "Awa",
+    "nom": "Diouf",
+    "sexe": "F",
+    "dateNaissance": "2014-03-14",
+    "dateNaissancePresumee": false,
+    "communeNaissanceId": 1,
+    "classe": "CM2",
+    "nomMere": "Mariama Sene",
+    "nomPere": "Ibrahima Diouf",
+    "telephoneParent": "+221770000099",
+    "langueContact": "WOLOF"
+  }
+}
+
+docs {
+  Fonction facultative, hors du contrat initial. Rôle ECOLE ; l'élève est créé dans l'école du compte connecté,
+  avec son dossier DETECTE. Mêmes règles que l'import CSV ; doublon : 409.
+}

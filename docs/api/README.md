@@ -43,8 +43,11 @@ Toutes les routes métier sont sous `/api`, en JSON, avec des champs en camelCas
 | GET | `/api/referentiels/centres` | Connecté | `[{id, nom}]` |
 | GET | `/api/referentiels/tribunaux` | Connecté | `[{id, nom}]` |
 | POST | `/api/eleves/import` | Rôle ECOLE | fichier CSV en multipart, champ `file` ; rapport d'import (voir ci-dessous) |
-| GET | `/api/eleves` | Rôle ECOLE ou SUPERVISEUR | liste d'élèves (hors contrat initial) |
-| GET | `/api/eleves/{id}` | Rôle ECOLE ou SUPERVISEUR | un élève (hors contrat initial) |
+| GET | `/api/eleves` | Rôle ECOLE | élèves actifs de son école, paginés (fonction facultative) |
+| GET | `/api/eleves/{id}` | Rôle ECOLE | un élève de son école (fonction facultative) |
+| POST | `/api/eleves` | Rôle ECOLE | saisir un élève et créer son dossier `DETECTE` (fonction facultative) |
+| PUT | `/api/eleves/{id}` | Rôle ECOLE | modifier l'identité et le contact (fonction facultative) |
+| DELETE | `/api/eleves/{id}` | Rôle ECOLE | archiver l'élève, sans rien effacer (fonction facultative) |
 | GET | `/api/dossiers` | Connecté | page de résumés de dossiers (voir ci-dessous) |
 | GET | `/api/dossiers/{id}` | Connecté | dossier complet : élève, données de chaque étape, témoins, historique |
 | POST | `/api/dossiers/{id}/avancer` | Rôle autorisé pour l'étape visée | dossier complet mis à jour |
@@ -53,7 +56,7 @@ Toutes les routes métier sont sous `/api`, en JSON, avec des champs en camelCas
 | PATCH | `/api/alertes/{id}/resoudre` | Rôle ETAT_CIVIL | alerte résolue |
 | GET | `/api/indicateurs` | Connecté | I1, I2, I3, dossiers par étape et en retard ; filtres `communeId`, `dateReference` |
 
-Les élèves arrivent par l'import CSV : il n'y a ni création, ni modification, ni suppression unitaire d'un élève (décision du 09/11), et aucun dossier ni historique n'est jamais supprimé (RG-13).
+Dans le contrat de base, les élèves arrivent par l'import CSV (décision du 09/11). La gestion unitaire des élèves par le directeur d'école est une **fonction facultative**, hors du contrat initial (voir « Gérer les élèves de son école »). Aucun dossier ni historique n'est jamais supprimé physiquement (RG-13).
 
 ## Authentification
 
@@ -120,6 +123,24 @@ L'import est ligne à ligne : une ligne invalide est rejetée avec son numéro (
 ```
 
 Un fichier d'exemple est versionné dans `src/test/resources/import-exemple.csv` : Awa, l'élève du scénario de démo, et une ligne volontairement fausse.
+
+## Gérer les élèves de son école (fonction facultative)
+
+Ces routes ne font pas partie du contrat initial. Elles sont réservées au rôle ECOLE et limitées à l'école du compte connecté : un élève d'une autre école répond 404, pour ne pas révéler son existence ; les autres rôles reçoivent 403.
+
+- `GET /api/eleves?page=0&taille=20` : page d'élèves actifs de l'école, par nom et prénom.
+- `POST /api/eleves` : saisit un élève avec les mêmes règles que l'import CSV, puis crée son dossier `DETECTE` et sa première ligne d'historique, comme l'import. L'école est celle du compte, jamais une valeur envoyée. Réponse 201 ; doublon (même prénom, nom, date de naissance et école) : 409.
+- `PUT /api/eleves/{id}` : modifie l'identité et le contact. Une fois le dossier au-delà de `DETECTE`, nom, prénom et date de naissance ne changent plus (409) ; le téléphone, la langue de contact ou la classe restent modifiables.
+- `DELETE /api/eleves/{id}` : archive l'élève (204). Rien n'est effacé : l'élève et son dossier sortent des listes, des alertes et des indicateurs, et l'historique est conservé.
+
+```json
+{
+  "prenom": "Awa", "nom": "Diouf", "sexe": "F", "dateNaissance": "2014-03-14",
+  "dateNaissancePresumee": false, "communeNaissanceId": 1, "classe": "CM2",
+  "nomMere": "Mariama Sene", "nomPere": "Ibrahima Diouf",
+  "telephoneParent": "+221770000099", "langueContact": "WOLOF", "numeroIne": null
+}
+```
 
 ## Faire avancer un dossier
 
