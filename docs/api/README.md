@@ -130,8 +130,8 @@ Ces routes ne font pas partie du contrat initial. Elles sont réservées au rôl
 
 - `GET /api/eleves?page=0&taille=20` : page d'élèves actifs de l'école, par nom et prénom.
 - `POST /api/eleves` : saisit un élève avec les mêmes règles que l'import CSV, puis crée son dossier `DETECTE` et sa première ligne d'historique, comme l'import. L'école est celle du compte, jamais une valeur envoyée. Réponse 201 ; doublon (même prénom, nom, date de naissance et école) : 409.
-- `PUT /api/eleves/{id}` : modifie l'identité et le contact. Une fois le dossier au-delà de `DETECTE`, nom, prénom et date de naissance ne changent plus (409) ; le téléphone, la langue de contact ou la classe restent modifiables.
-- `DELETE /api/eleves/{id}` : archive l'élève (204). Rien n'est effacé : l'élève et son dossier sortent des listes, des alertes et des indicateurs, et l'historique est conservé.
+- `PUT /api/eleves/{id}` : modifie l'identité et le contact. Une fois le dossier au-delà de `DETECTE`, nom, prénom, date de naissance et commune de naissance ne changent plus (409) ; le téléphone, la langue de contact ou la classe restent modifiables.
+- `DELETE /api/eleves/{id}` : archive l'élève (204), seulement tant que son dossier est à `DETECTE` ; au-delà, le dossier est suivi par l'état civil ou le tribunal et la route répond 409. Rien n'est effacé : l'élève et son dossier sortent des listes, des alertes et des indicateurs, et l'historique est conservé.
 
 ```json
 {
