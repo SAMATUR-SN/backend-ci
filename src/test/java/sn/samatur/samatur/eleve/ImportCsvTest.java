@@ -51,7 +51,7 @@ class ImportCsvTest extends TestIntegration {
         }
         csv.append("\nMoussa;Ndiaye;M;02/07/2014;oui;Bambeye;ECO-BAM-01;CM2;Fatou Sarr;;;;");
         // Doublon d'un élève de V3 : Mamadou Diop, né le 12/05/2014, école ECO-BAM-01
-        csv.append("\nMamadou;Diop;M;12/05/2014;;Bambey (Commune);ECO-BAM-01;CM2;Aissatou Ba;;;;");
+        csv.append("\nMamadou;Diop;M;12/05/2014;;Bambey;ECO-BAM-01;CM2;Aissatou Ba;;;;");
         long detectesAvant = compter("SELECT count(*) FROM dossier WHERE etape = 'DETECTE'");
 
         mvc.perform(multipart("/api/eleves/import")
