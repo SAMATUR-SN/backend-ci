@@ -2,7 +2,10 @@ package sn.samatur.samatur.alerte.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import sn.samatur.samatur.alerte.dto.AlerteDto;
 import sn.samatur.samatur.alerte.entity.Alerte;
+import sn.samatur.samatur.commun.RessourceIntrouvableException;
 import sn.samatur.samatur.alerte.repository.AlerteRepository;
 import sn.samatur.samatur.dossier.entity.Dossier;
 import sn.samatur.samatur.dossier.entity.StatutDossier;
@@ -21,6 +24,21 @@ public class AlerteService {
 
     @Autowired
     private AlerteRepository alerteRepository;
+
+    // Alertes non résolues, en DTO construits dans la transaction
+    @Transactional(readOnly = true)
+    public List<AlerteDto> listerActives() {
+        return alerteRepository.findByResolueFalse().stream().map(AlerteDto::de).toList();
+    }
+
+    // Marquer une alerte comme résolue
+    @Transactional
+    public AlerteDto resoudre(Long id) {
+        Alerte alerte = alerteRepository.findById(id)
+                .orElseThrow(() -> new RessourceIntrouvableException("Alerte " + id + " introuvable."));
+        alerte.setResolue(true);
+        return AlerteDto.de(alerte);
+    }
 
     // Vérifie tous les dossiers et génère des alertes si les délais sont dépassés
     public void verifierRetardsDossiers() {
