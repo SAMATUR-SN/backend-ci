@@ -1,19 +1,26 @@
 package sn.samatur.samatur.alerte.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+/** Chaque nuit, enregistre une alerte pour chaque dossier devenu en retard depuis la veille (RG-11). */
 @Component
 public class AlerteScheduler {
 
-    @Autowired
-    private AlerteService alerteService;
+    private static final Logger logger = LoggerFactory.getLogger(AlerteScheduler.class);
 
-    @Scheduled(cron = "0 0 0 * * ?")
+    private final AlerteService alerteService;
+
+    public AlerteScheduler(AlerteService alerteService) {
+        this.alerteService = alerteService;
+    }
+
+    @Scheduled(cron = "0 0 0 * * *", zone = "Africa/Dakar")
     public void verifierRetardsQuotidien() {
-        System.out.println("Execution quotidienne de la verification des retards de dossiers...");
-        alerteService.verifierRetardsDossiers();
-        System.out.println("Verification des retards terminee.");
+        int creees = alerteService.enregistrerNouvellesAlertes();
+        // Seulement un nombre : jamais de nom d'élève dans les logs
+        logger.info("Vérification quotidienne des retards : {} nouvelle(s) alerte(s).", creees);
     }
 }
