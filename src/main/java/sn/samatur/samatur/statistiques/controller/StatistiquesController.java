@@ -13,7 +13,7 @@ import sn.samatur.samatur.statistiques.service.StatistiquesService;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/statistiques")
+@RequestMapping("/api/indicateurs")
 @Tag(name = "Statistiques")
 @SecurityRequirement(name = "bearerAuth")
 public class StatistiquesController {
@@ -25,7 +25,7 @@ public class StatistiquesController {
         this.statistiquesService = statistiquesService;
     }
 
-    @GetMapping("/dashboard")
+    @GetMapping
     @Operation(summary = "Obtenir les indicateurs du tableau de bord")
     public ResponseEntity obtenirDashboard() {
         Map<String, Object> stats = statistiquesService.obtenirTableauDeBord();
