@@ -62,7 +62,7 @@ class ImportCsvServiceTest {
 
         Commune bambey = new Commune();
         bambey.setId(1L);
-        bambey.setNom("Bambey (Commune)");
+        bambey.setNom("Bambey");
         Commune ngoye = new Commune();
         ngoye.setId(2L);
         ngoye.setNom("Ngoye");
@@ -95,10 +95,10 @@ class ImportCsvServiceTest {
         lenient().when(eleves.existsByPrenomIgnoreCaseAndNomIgnoreCaseAndDateNaissanceAndEcoleIdAndArchiveLeIsNull(
                 eq("Fatou"), eq("Sarr"), any(), eq(1L))).thenReturn(true);
         String csv = String.join("\n", ENTETE,
-                "Awa;Diouf;F;14/03/2014;non;Bambey (Commune);ECO-BAM-01;CM2;Mariama Sene;;;;",
+                "Awa;Diouf;F;14/03/2014;non;Bambey;ECO-BAM-01;CM2;Mariama Sene;;;;",
                 "Moussa;Ndiaye;M;02/07/2014;oui;Bambeye;ECO-BAM-01;CM2;Fatou Sarr;;;;",
                 "",
-                "Fatou;Sarr;F;20/09/2013;;Bambey (Commune);ECO-BAM-01;CM2;Sokhna Ndiaye;;;;",
+                "Fatou;Sarr;F;20/09/2013;;Bambey;ECO-BAM-01;CM2;Sokhna Ndiaye;;;;",
                 "Ibrahima;Sow;M;14/08/2014;;Ngoye;eco-bam-01;cm1;Dieynaba Ka;;+221 77 000 00 11;pulaar;");
 
         RapportImport rapport = service.importer(fichier(csv), ecole);
@@ -132,7 +132,7 @@ class ImportCsvServiceTest {
     @Test // 6.5 : Excel ajoute un BOM en tête des fichiers « CSV UTF-8 »
     void lit_un_fichier_avec_le_bom_d_excel() {
         RapportImport rapport = service.importer(fichier(String.valueOf((char) 0xFEFF) + ENTETE
-                + "\nAwa;Diouf;F;14/03/2014;non;Bambey (Commune);ECO-BAM-01;CM2;Mariama Sene;;;;"), ecole);
+                + "\nAwa;Diouf;F;14/03/2014;non;Bambey;ECO-BAM-01;CM2;Mariama Sene;;;;"), ecole);
 
         assertThat(rapport.importes()).isEqualTo(1);
     }
