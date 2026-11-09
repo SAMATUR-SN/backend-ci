@@ -28,6 +28,7 @@ import sn.samatur.samatur.dossier.entity.Temoin;
 import sn.samatur.samatur.dossier.repository.DossierRepository;
 import sn.samatur.samatur.dossier.repository.HistoriqueEtapeRepository;
 import sn.samatur.samatur.eleve.dto.EleveDto;
+import sn.samatur.samatur.eleve.entity.Eleve;
 import sn.samatur.samatur.referentiel.entity.CentreEtatCivil;
 import sn.samatur.samatur.referentiel.entity.TribunalInstance;
 import sn.samatur.samatur.referentiel.repository.CentreEtatCivilRepository;
@@ -116,6 +117,38 @@ public class DossierService {
                     "Tri inconnu : utiliser reference, dateDetection ou dateJugement, suivi de ,asc ou ,desc.");
         }
         return Sort.by(Sort.Direction.fromString(sens), champ);
+    }
+
+    /**
+     * Crée le dossier d'un élève qui vient d'être enregistré, à l'étape DETECTE, avec sa référence
+     * ST-AAAA-NNNNNN (RG-08) et sa première ligne d'historique (RG-09). Utilisée par l'import CSV,
+     * et par toute future saisie d'un élève : un dossier ne naît jamais autrement.
+     */
+    @Transactional
+    public Dossier creerDossierDetecte(Eleve eleve, UserDetailsImpl qui, String commentaire) {
+        if (!StatutDossier.DETECTE.roleAutorise().equals(qui.getRole())) {
+            throw new AccessDeniedException("Rôle non autorisé pour l'étape DETECTE.");
+        }
+        if (eleve.getId() != null && dossierRepository.existsByEleveId(eleve.getId())) {
+            throw new ConflitException("Cet élève a déjà un dossier.");   // RG-01
+        }
+        LocalDate aujourdhui = LocalDate.now(horloge);
+        Dossier d = new Dossier();
+        d.setEleve(eleve);
+        d.setEtape(StatutDossier.DETECTE);
+        d.setDateDetection(aujourdhui);
+        d.setReference(String.format("ST-%d-%06d", aujourdhui.getYear(), dossierRepository.prochainNumero()));
+        dossierRepository.save(d);
+
+        HistoriqueEtape h = new HistoriqueEtape();
+        h.setDossier(d);
+        h.setEtapeArrivee(StatutDossier.DETECTE);
+        h.setDateHeure(LocalDateTime.now(horloge));
+        h.setAuteurId(qui.getId());
+        h.setRoleAuteur(qui.getRole());
+        h.setCommentaire(commentaire);
+        historiqueEtapeRepository.save(h);
+        return d;
     }
 
     /** F3 : le dossier complet, avec ses témoins et son historique. */

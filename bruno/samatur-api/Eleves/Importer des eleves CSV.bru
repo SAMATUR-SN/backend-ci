@@ -14,5 +14,13 @@ headers {
 }
 
 body:multipart-form {
-  file: @file(C:/path/to/eleves.csv)
+  file: @file(../../src/test/resources/import-exemple.csv)
+}
+
+docs {
+  Rôle ECOLE. CSV UTF-8, séparateur point-virgule, une ligne d'en-tête, 2 Mo et 1 000 lignes au maximum.
+  Colonnes obligatoires : prenom, nom, sexe (F/M), date_naissance (JJ/MM/AAAA), commune_naissance,
+  code_ecole, classe, nom_mere. Facultatives : date_naissance_presumee (oui/non), nom_pere,
+  telephone_parent (+221 et 9 chiffres), langue_contact, numero_ine.
+  Réponse : {total, importes, rejetes, erreurs: [{ligne, motif}]}.
 }
