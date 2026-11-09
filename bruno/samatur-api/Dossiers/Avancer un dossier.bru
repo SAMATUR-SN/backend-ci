@@ -6,9 +6,32 @@ meta {
 
 post {
   url: {{baseUrl}}/api/dossiers/{{dossierId}}/avancer
-  body: none
+  body: json
+  auth: none
 }
 
 headers {
   Authorization: Bearer {{token}}
+}
+
+body:json {
+  {
+    "etapeCible": "JUGEMENT_RENDU",
+    "numeroJugement": "1287/2026",
+    "dateJugement": "2026-11-03",
+    "tribunalId": 1,
+    "typeAudience": "FORAINE",
+    "commentaire": "Audience foraine de Bambey"
+  }
+}
+
+docs {
+  Fait passer le dossier à l'étape suivante et écrit son historique (effet de bord).
+  etapeCible doit être l'étape suivant l'étape courante ; la requête porte les champs de cette étape :
+  - CERTIFICAT_OBTENU (ETAT_CIVIL) : numeroCertificat, dateCertificat, centreEtatCivilId
+  - DOSSIER_COMPLET (ECOLE) : preuveNaissance ; si TEMOINS, temoins = 2 x {nomComplet, numeroPiece}
+  - JUGEMENT_RENDU (TRIBUNAL) : numeroJugement, dateJugement, tribunalId, typeAudience
+  - TRANSCRIT (ETAT_CIVIL) : numeroActe, anneeActe, dateTranscription
+  - ACTE_REMIS (ECOLE) : dateRemise
+  commentaire est facultatif. Saut d'étape ou champ manquant : 422 ; étape déjà franchie : 409 ; rôle non autorisé : 403.
 }
