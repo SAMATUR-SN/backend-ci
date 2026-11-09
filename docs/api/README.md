@@ -19,15 +19,16 @@ Base URL par défaut : `http://localhost:8080`.
 
 ## Configuration locale
 
-Utiliser `.env.example` comme modèle pour définir les variables dans l'environnement de lancement, notamment `SPRING_DATASOURCE_PASSWORD` et `SAMATUR_JWT_SECRET`. Spring Boot ne charge pas automatiquement un fichier `.env`. Générer une clé JWT aléatoire d'au moins 32 octets et ne pas la partager ni la committer. Les fichiers `.env` sont ignorés par Git ; seul le modèle `.env.example` est versionné.
+Utiliser `.env.example` comme modèle pour définir les variables dans l'environnement de lancement, notamment `SPRING_DATASOURCE_PASSWORD` et `SAMATUR_JWT_SECRET`. Avec `compose.dev.yaml`, le fichier `.env` est lu par Docker Compose : `docker compose -f compose.dev.yaml up` lance la base et l'API. Depuis un IDE, Spring Boot ne charge pas ce fichier : définir les variables dans la configuration de lancement. Générer une clé JWT aléatoire d'au moins 32 octets et ne pas la partager ni la committer. Les fichiers `.env` sont ignorés par Git ; seul le modèle `.env.example` est versionné.
 
 ## Routes exposées actuellement
 
 | Méthode | Route | Accès |
 |---|---|---|
+| GET | `/health` | Public ; répond `{"status":"UP"}` |
 | POST | `/api/auth/connexion` | Public |
-| GET | `/api/eleves` | Rôle ECOLE, SUPERVISEUR ou ADMIN |
-| GET | `/api/eleves/{id}` | Rôle ECOLE, SUPERVISEUR ou ADMIN |
+| GET | `/api/eleves` | Rôle ECOLE ou SUPERVISEUR |
+| GET | `/api/eleves/{id}` | Rôle ECOLE ou SUPERVISEUR |
 | POST | `/api/eleves` | Rôle ECOLE ou SUPERVISEUR |
 | PUT | `/api/eleves/{id}` | Rôle ECOLE ou SUPERVISEUR |
 | DELETE | `/api/eleves/{id}` | Rôle ECOLE ou SUPERVISEUR |
@@ -36,11 +37,13 @@ Utiliser `.env.example` comme modèle pour définir les variables dans l'environ
 | GET | `/api/dossiers/{id}` | Rôle ECOLE, ETAT_CIVIL, TRIBUNAL ou SUPERVISEUR |
 | POST | `/api/dossiers/{id}/avancer` | Rôle ECOLE, ETAT_CIVIL ou TRIBUNAL |
 | GET | `/api/alertes` | Tout utilisateur authentifié |
-| POST | `/api/alertes/verifier` | Tout utilisateur authentifié |
-| PATCH | `/api/alertes/{id}/resoudre` | Tout utilisateur authentifié |
+| POST | `/api/alertes/verifier` | Rôle ETAT_CIVIL |
+| PATCH | `/api/alertes/{id}/resoudre` | Rôle ETAT_CIVIL |
 | GET | `/api/statistiques/dashboard` | Tout utilisateur authentifié |
 
-Les contrôles de rôle sont ceux déclarés dans les contrôleurs. L'authentification JWT est exigée pour toutes les routes sauf `/api/auth/**`, la documentation Swagger et `/actuator/**`.
+Les contrôles de rôle sont ceux déclarés dans les contrôleurs. L'authentification JWT est exigée pour toutes les routes sauf `/health`, `/api/auth/connexion` et la documentation Swagger. Sans jeton, ou avec un jeton expiré ou invalide, l'API répond 401 ; avec un rôle non autorisé, 403. Les jetons sont signés en HS256 et valables 8 heures.
+
+Une connexion refusée (identifiant inconnu, mauvais mot de passe ou compte désactivé) répond toujours 401 avec le même message, au format `application/problem+json`.
 
 ## Séquence conseillée
 
@@ -56,18 +59,12 @@ Les mutations ne sont pas toutes réversibles : en particulier, faire avancer un
 ## Limites connues du contrat actuel
 
 - `ReferentielController.java` est vide : aucune route de lecture des écoles, communes, centres d'état civil ou tribunaux n'est exposée. La création d'un élève attend pourtant des objets `ecole` et éventuellement `communeNaissance`.
-- Les statuts permis par la contrainte SQL de la migration V1 ne correspondent pas tous à `StatutDossier` et aux transitions du service. Une transition peut donc échouer en base.
-- `Alerte` et ses routes existent dans le code Java, mais les migrations V1 à V4 ne créent pas la table `alerte`. Le schéma doit être complété avant de valider les routes d'alertes et les statistiques associées.
-- Le rôle `ADMIN` est accepté par certaines annotations de contrôleur, mais la contrainte SQL de `utilisateur.role` ne permet que `ECOLE`, `ETAT_CIVIL`, `TRIBUNAL` et `SUPERVISEUR`.
 - Les contrôleurs exposent directement des entités JPA, pas des DTO dédiés. La forme exacte des réponses dépend donc de la sérialisation des relations.
 - La création d'un élève ne crée pas automatiquement de dossier ; aucun endpoint HTTP de création de dossier n'est exposé.
 
-La collection inclut les routes existantes, mais les opérations touchant les tables ou statuts signalés ci-dessus peuvent échouer jusqu'à la correction du schéma et du modèle.
+Le dossier suit six étapes, identiques dans l'enum `StatutDossier` et dans la contrainte SQL : `DETECTE`, `CERTIFICAT_OBTENU`, `DOSSIER_COMPLET`, `JUGEMENT_RENDU`, `TRANSCRIT`, `ACTE_REMIS`.
 
----Les variables environnements-----------
-SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/samatur_db
-SPRING_DATASOURCE_USERNAME=postgres
-SPRING_DATASOURCE_PASSWORD=admin
-SAMATUR_JWT_SECRET=9DoMnIzVrUCD+OVB0G8YZfNRiP9DRT3DB2HtY/Vh4FI=
-SAMATUR_JWT_EXPIRATION=86400000
----
+
+## Données de démonstration
+
+La migration V3 crée 40 élèves fictifs du département de Bambey, répartis sur les six étapes, dont 5 dossiers en retard (jugement non transcrit depuis plus de 15 jours). Les dates sont relatives au jour du démarrage. Les mots de passe des quatre comptes de démo (`ecole1@samatur.sn`, `etatcivil1@samatur.sn`, `tribunal1@samatur.sn`, `superviseur@samatur.sn`) sont communiqués hors du dépôt.

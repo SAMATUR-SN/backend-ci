@@ -21,6 +21,9 @@ public class UserDetailsImpl implements UserDetails {
 
     private Collection<? extends GrantedAuthority> authorities;
 
+    /** Compte actif : un compte désactivé ne peut pas se connecter (RG-15). */
+    private boolean actif = true;
+
     public UserDetailsImpl(Long id, String username, String password,
                            Collection<? extends GrantedAuthority> authorities) {
         this.id = id;
@@ -34,11 +37,13 @@ public class UserDetailsImpl implements UserDetails {
             new SimpleGrantedAuthority("ROLE_" + utilisateur.getRole())
         );
 
-        return new UserDetailsImpl(
+        UserDetailsImpl details = new UserDetailsImpl(
                 utilisateur.getId(),
                 utilisateur.getIdentifiant(),
                 utilisateur.getMotDePasseHash(),
                 authorities);
+        details.actif = Boolean.TRUE.equals(utilisateur.getActif());
+        return details;
     }
 
     public Long getId() {
@@ -70,5 +75,5 @@ public class UserDetailsImpl implements UserDetails {
     public boolean isCredentialsNonExpired() { return true; }
 
     @Override
-    public boolean isEnabled() { return true; }
+    public boolean isEnabled() { return actif; }
 }

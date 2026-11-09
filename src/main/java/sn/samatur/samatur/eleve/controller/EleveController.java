@@ -25,7 +25,7 @@ public class EleveController {
     // 1. Lister tous les élèves
     @GetMapping
     @Operation(summary = "Lister les élèves")
-    @PreAuthorize("hasAnyRole('ECOLE', 'SUPERVISEUR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('ECOLE', 'SUPERVISEUR')")
     public ResponseEntity<List<Eleve>> listerTous() {
         List<Eleve> eleves = eleveService.listerTous();
         return ResponseEntity.ok(eleves);
@@ -34,7 +34,7 @@ public class EleveController {
     // 2. Trouver un élève par son ID
     @GetMapping("/{id}")
     @Operation(summary = "Obtenir un élève")
-    @PreAuthorize("hasAnyRole('ECOLE', 'SUPERVISEUR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('ECOLE', 'SUPERVISEUR')")
     public ResponseEntity<Eleve> trouverParId(@PathVariable Long id) {
         return eleveService.trouverParId(id)
                 .map(ResponseEntity::ok)

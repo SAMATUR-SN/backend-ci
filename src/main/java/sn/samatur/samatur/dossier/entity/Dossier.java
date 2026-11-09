@@ -40,6 +40,10 @@ public class Dossier {
     @Column(name = "date_certificat")
     private LocalDate dateCertificat;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "preuve_naissance")
+    private PreuveNaissance preuveNaissance;
+
     @Column(name = "numero_jugement")
     private String numeroJugement;
 
@@ -51,6 +55,9 @@ public class Dossier {
 
     @Column(name = "numero_acte")
     private String numeroActe;
+
+    @Column(name = "annee_acte")
+    private Integer anneeActe;
 
     @Column(name = "date_transcription")
     private LocalDate dateTranscription;

@@ -42,8 +42,8 @@ public class AlerteService {
             int seuilLimite = obtenirSeuilParEtape(dossier.getEtape());
 
             if (joursEcoules > seuilLimite) {
-                // Vérifier si une alerte non résolue existe déjà pour ce dossier
-                boolean alerteExiste = alerteRepository.existsByDossierIdAndResolueFalse(dossier.getId());
+                // Une alerte au plus par dossier (RG-11), même après sa résolution
+                boolean alerteExiste = alerteRepository.existsByDossierId(dossier.getId());
                 
                 if (!alerteExiste) {
                     Alerte alerte = new Alerte();
@@ -64,7 +64,6 @@ public class AlerteService {
             case DETECTE:
                 return 15;
             case CERTIFICAT_OBTENU:
-            case CERTIFICAT_ETABLI:
                 return 30;
             case DOSSIER_COMPLET:
                 return 20;

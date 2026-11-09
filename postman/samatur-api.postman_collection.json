@@ -91,7 +91,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"numeroIne\": null,\n  \"sexe\": \"M\",\n  \"nom\": \"Exemple\",\n  \"prenom\": \"Eleve\",\n  \"dateNaissance\": \"2014-01-15\",\n  \"dateNaissancePresumee\": false,\n  \"classe\": \"CM2\",\n  \"ecole\": { \"id\": 1 },\n  \"communeNaissance\": { \"id\": 1 },\n  \"nomPere\": \"Parent exemple\",\n  \"professionPere\": \"Agriculteur\",\n  \"nomMere\": \"Parent exemple\",\n  \"professionMere\": \"Commercante\"\n}",
+              "raw": "{\n  \"numeroIne\": null,\n  \"sexe\": \"M\",\n  \"nom\": \"Exemple\",\n  \"prenom\": \"Eleve\",\n  \"dateNaissance\": \"2014-01-15\",\n  \"dateNaissancePresumee\": false,\n  \"classe\": \"CM2\",\n  \"ecole\": { \"id\": 1 },\n  \"communeNaissance\": { \"id\": 1 },\n  \"nomPere\": \"Parent exemple\",\n  \"nomMere\": \"Parent exemple\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -113,7 +113,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"numeroIne\": null,\n  \"sexe\": \"M\",\n  \"nom\": \"Exemple modifie\",\n  \"prenom\": \"Eleve\",\n  \"dateNaissance\": \"2014-01-15\",\n  \"dateNaissancePresumee\": false,\n  \"classe\": \"CM2\",\n  \"ecole\": { \"id\": 1 },\n  \"communeNaissance\": { \"id\": 1 },\n  \"nomPere\": \"Parent exemple\",\n  \"professionPere\": \"Agriculteur\",\n  \"nomMere\": \"Parent exemple\",\n  \"professionMere\": \"Commercante\"\n}",
+              "raw": "{\n  \"numeroIne\": null,\n  \"sexe\": \"M\",\n  \"nom\": \"Exemple modifie\",\n  \"prenom\": \"Eleve\",\n  \"dateNaissance\": \"2014-01-15\",\n  \"dateNaissancePresumee\": false,\n  \"classe\": \"CM2\",\n  \"ecole\": { \"id\": 1 },\n  \"communeNaissance\": { \"id\": 1 },\n  \"nomPere\": \"Parent exemple\",\n  \"nomMere\": \"Parent exemple\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
