@@ -34,7 +34,7 @@ class AlerteServiceTest {
         d.setId(1L);
         d.setDateJugement(LocalDate.parse(date));
         // La limite est aujourd'hui moins le délai cible : 20/11 − 15 jours = 05/11
-        when(dossiers.findByEtapeAndDateJugementBeforeOrderByDateJugementAsc(
+        when(dossiers.findByEtapeAndDateJugementBeforeAndEleveArchiveLeIsNullOrderByDateJugementAsc(
                 StatutDossier.JUGEMENT_RENDU, LocalDate.parse("2026-11-05"))).thenReturn(List.of(d));
         return d;
     }

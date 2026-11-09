@@ -94,6 +94,7 @@ public class DossierService {
     public PageDto<DossierResumeDto> lister(FiltreDossiers f, int page, int taille, String tri) {
         LocalDate aujourdhui = LocalDate.now(horloge);
         Specification<Dossier> spec = Specification.allOf(
+                DossierSpecifications.actif(),
                 DossierSpecifications.etape(f.etape()),
                 DossierSpecifications.commune(f.communeId()),
                 DossierSpecifications.ecole(f.ecoleId()),
@@ -208,6 +209,7 @@ public class DossierService {
 
     private Dossier trouver(Long id) {
         return dossierRepository.findById(id)
+                .filter(d -> d.getEleve().getArchiveLe() == null)   // un élève archivé n'a plus de dossier visible
                 .orElseThrow(() -> new RessourceIntrouvableException("Dossier " + id + " introuvable."));
     }
 
