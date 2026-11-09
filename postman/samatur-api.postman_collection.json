@@ -175,7 +175,7 @@
               }
             ],
             "url": "{{baseUrl}}/api/eleves/{{eleveId}}",
-            "description": "Fonction facultative, hors du contrat initial. Rôle ECOLE, limité à son école (élève d'une autre école : 404). Une fois le dossier au-delà de DETECTE, nom, prénom et date de naissance ne changent plus : 409.",
+            "description": "Fonction facultative, hors du contrat initial. Rôle ECOLE, limité à son école (élève d'une autre école : 404). Une fois le dossier au-delà de DETECTE, nom, prénom, date de naissance et commune de naissance ne changent plus : 409.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"prenom\": \"Mamadou\",\n  \"nom\": \"Diop\",\n  \"sexe\": \"M\",\n  \"dateNaissance\": \"2014-05-12\",\n  \"communeNaissanceId\": 1,\n  \"classe\": \"CM2\",\n  \"nomMere\": \"Aissatou Ba\",\n  \"telephoneParent\": \"+221770000001\",\n  \"langueContact\": \"WOLOF\"\n}",
@@ -192,7 +192,7 @@
           "request": {
             "method": "DELETE",
             "url": "{{baseUrl}}/api/eleves/{{eleveId}}",
-            "description": "Fonction facultative, hors du contrat initial. Rôle ECOLE, limité à son école (élève d'une autre école : 404). Archivage, jamais une suppression physique (RG-13) : l'élève et son dossier sortent des listes, des alertes et des indicateurs ; l'historique est conservé. Réponse 204."
+            "description": "Fonction facultative, hors du contrat initial. Rôle ECOLE, limité à son école (élève d'une autre école : 404). Archivage, jamais une suppression physique (RG-13) : l'élève et son dossier sortent des listes, des alertes et des indicateurs ; l'historique est conservé. Réponse 204. Seulement tant que le dossier est à DETECTE ; au-delà : 409."
           }
         }
       ]
