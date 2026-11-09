@@ -157,6 +157,12 @@ class ContratApiTest extends TestIntegration {
         mvc.perform(get("/api/eleves/9999").with(user(superviseur()))).andExpect(status().isNotFound());
     }
 
+    @Test // RG-13 : aucun dossier, élève ni historique n'est supprimé physiquement
+    void aucune_route_de_l_api_ne_supprime() throws Exception {
+        String specification = mvc.perform(get("/v3/api-docs")).andReturn().getResponse().getContentAsString();
+        org.assertj.core.api.Assertions.assertThat(specification).doesNotContain("\"delete\"");
+    }
+
     @Test // Swagger reste public et ne décrit plus les routes retirées
     void la_documentation_openapi_est_publique_et_a_jour() throws Exception {
         mvc.perform(get("/v3/api-docs"))

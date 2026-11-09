@@ -240,6 +240,17 @@ class DossierServiceTest {
         assertThat(ligne.getValue().getRoleAuteur()).isEqualTo("ECOLE");
     }
 
+    @Test // RG-01 : un élève a au plus un dossier
+    void un_second_dossier_pour_le_meme_eleve_est_refuse_en_409() {
+        Eleve eleve = new Eleve();
+        eleve.setId(5L);
+        when(dossiers.existsByEleveId(5L)).thenReturn(true);
+
+        assertThatThrownBy(() -> service.creerDossierDetecte(eleve, compte(1, "ECOLE"), null))
+                .isInstanceOf(ConflitException.class);
+        verify(dossiers, never()).save(any());
+    }
+
     @Test // RG-03 : seule une école fait naître un dossier
     void seule_une_ecole_cree_un_dossier() {
         assertThatThrownBy(() -> service.creerDossierDetecte(new Eleve(), compte(2, "ETAT_CIVIL"), null))
