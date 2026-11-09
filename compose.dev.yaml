@@ -1,0 +1,53 @@
+# Environnement de développement : Java 25 et PostgreSQL 18 en conteneurs, sans rien installer.
+#   cp .env.example .env    puis remplir SPRING_DATASOURCE_PASSWORD et SAMATUR_JWT_SECRET
+#   docker compose -f compose.dev.yaml up                                    # base + API sur :8080
+#   docker compose -f compose.dev.yaml run --rm backend ./mvnw clean verify  # build + tests
+#   docker compose -f compose.dev.yaml down -v                               # repartir d'une base vide
+name: samatur-dev
+
+services:
+  db:
+    image: postgres:18
+    environment:
+      POSTGRES_DB: samatur_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${SPRING_DATASOURCE_PASSWORD:?à définir dans .env}
+    ports:
+      # 5433 côté hôte pour ne pas gêner un PostgreSQL local
+      - "5433:5432"
+    volumes:
+      # PostgreSQL 18 : monter /var/lib/postgresql, pas .../data
+      - db-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d samatur_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  backend:
+    # Même image que l'étape de build du Dockerfile
+    image: eclipse-temurin:25-jdk-jammy
+    working_dir: /app
+    command: ["./mvnw", "spring-boot:run"]
+    env_file: .env
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/samatur_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      # Testcontainers lancé depuis un conteneur : il pilote le Docker de l'hôte
+      TESTCONTAINERS_HOST_OVERRIDE: host.docker.internal
+      TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE: /var/run/docker.sock
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "8080:8080"
+    volumes:
+      - .:/app
+      - m2-cache:/root/.m2
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  db-data:
+  m2-cache:
