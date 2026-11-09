@@ -2,7 +2,9 @@ package sn.samatur.samatur.security;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
@@ -71,6 +73,26 @@ class AuthentificationTest extends TestIntegration {
     @Test // 7.5, RG-14
     void sans_jeton_l_api_repond_401() throws Exception {
         mvc.perform(get("/api/dossiers")).andExpect(status().isUnauthorized());
+    }
+
+    @Test // RG-14, à travers le vrai filtre JWT : jeton valide accepté ; expiré ou falsifié, 401
+    void un_jeton_valide_ouvre_l_api_un_jeton_expire_ou_falsifie_donne_401(
+            @Autowired JwtUtils jwtUtils, @Autowired UserDetailsServiceImpl comptes,
+            @Value("${samatur.jwt.secret}") String secret) throws Exception {
+        UserDetails ecole = comptes.loadUserByUsername("ecole1@samatur.sn");
+        String valide = jwtUtils.generateJwtToken(ecole);
+        mvc.perform(get("/api/auth/moi").header("Authorization", "Bearer " + valide))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.role").value("ECOLE"));
+
+        String expire = new JwtUtils(secret, -1_000).generateJwtToken(ecole);
+        mvc.perform(get("/api/auth/moi").header("Authorization", "Bearer " + expire))
+                .andExpect(status().isUnauthorized());
+
+        String[] parties = valide.split("\\.");
+        String falsifie = parties[0] + "." + parties[1] + "." + new StringBuilder(parties[2]).reverse();
+        mvc.perform(get("/api/auth/moi").header("Authorization", "Bearer " + falsifie))
+                .andExpect(status().isUnauthorized());
     }
 
     @Test // 3.1 : /health public, sans détail sur la base
