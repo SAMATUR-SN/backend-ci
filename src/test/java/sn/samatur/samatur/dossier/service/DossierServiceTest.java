@@ -224,6 +224,29 @@ class DossierServiceTest {
         assertThat(service.estEnRetard(d)).isFalse();
     }
 
+    @Test // RG-08, RG-09 : un dossier naît à DETECTE avec sa référence et sa première ligne d'historique
+    void un_nouveau_dossier_recoit_une_reference_ST_AAAA_NNNNNN_et_un_historique() {
+        when(dossiers.prochainNumero()).thenReturn(42L);
+
+        Dossier d = service.creerDossierDetecte(new Eleve(), compte(1, "ECOLE"), "Dossier créé par import CSV");
+
+        assertThat(d.getReference()).isEqualTo("ST-2026-000042");
+        assertThat(d.getEtape()).isEqualTo(StatutDossier.DETECTE);
+        assertThat(d.getDateDetection()).isEqualTo(AUJOURDHUI);
+        ArgumentCaptor<HistoriqueEtape> ligne = ArgumentCaptor.forClass(HistoriqueEtape.class);
+        verify(historique).save(ligne.capture());
+        assertThat(ligne.getValue().getEtapeDepart()).isNull();
+        assertThat(ligne.getValue().getEtapeArrivee()).isEqualTo(StatutDossier.DETECTE);
+        assertThat(ligne.getValue().getRoleAuteur()).isEqualTo("ECOLE");
+    }
+
+    @Test // RG-03 : seule une école fait naître un dossier
+    void seule_une_ecole_cree_un_dossier() {
+        assertThatThrownBy(() -> service.creerDossierDetecte(new Eleve(), compte(2, "ETAT_CIVIL"), null))
+                .isInstanceOf(AccessDeniedException.class);
+        verify(dossiers, never()).save(any());
+    }
+
     @Test
     void un_dossier_inexistant_donne_404() {
         when(dossiers.findById(99L)).thenReturn(Optional.empty());
