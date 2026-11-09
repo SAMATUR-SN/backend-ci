@@ -18,6 +18,8 @@ import org.springframework.stereotype.Component;
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Date;
 
 /**
@@ -57,14 +59,25 @@ public class JwtUtils {
                 .build();
     }
 
-    public String generateJwtToken(UserDetails userDetails) {
-        Date maintenant = new Date();
-        return Jwts.builder()
+    /** Un jeton et son instant d'expiration, renvoyé au client sous le nom expireA. */
+    public record JetonEmis(String jeton, Instant expireA) {
+    }
+
+    public JetonEmis emettre(UserDetails userDetails) {
+        Instant maintenant = Instant.now();
+        Instant expiration = maintenant.plusMillis(dureeMs);
+        String jeton = Jwts.builder()
                 .subject(userDetails.getUsername())
-                .issuedAt(maintenant)
-                .expiration(new Date(maintenant.getTime() + dureeMs))
+                .issuedAt(Date.from(maintenant))
+                .expiration(Date.from(expiration))
                 .signWith(cle, ALGORITHME)
                 .compact();
+        // Le jeton ne porte que des secondes : l'expiration annoncée doit être la même
+        return new JetonEmis(jeton, expiration.truncatedTo(ChronoUnit.SECONDS));
+    }
+
+    public String generateJwtToken(UserDetails userDetails) {
+        return emettre(userDetails).jeton();
     }
 
     public String getUserNameFromJwtToken(String token) {
