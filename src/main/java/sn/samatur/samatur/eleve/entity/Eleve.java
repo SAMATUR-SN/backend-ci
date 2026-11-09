@@ -21,8 +21,7 @@ public class Eleve {
     @Column(name = "numero_ine", unique = true)
     private String numeroIne;
 
-    // Ajoute cette ligne pour le sexe :
-    @Column(nullable = false, length = 10)
+    @Column(nullable = false, length = 1)
     private String sexe;
 
     @Column(nullable = false)
@@ -51,12 +50,13 @@ public class Eleve {
     @Column(name = "nom_pere", length = 150)
     private String nomPere;
 
-    @Column(name = "profession_pere", length = 100)
-    private String professionPere;
-
     @Column(name = "nom_mere", length = 150)
     private String nomMere;
 
-    @Column(name = "profession_mere", length = 100)
-    private String professionMere;
+    @Column(name = "telephone_parent", length = 13)
+    private String telephoneParent;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "langue_contact", nullable = false, length = 20)
+    private Langue langueContact = Langue.FRANCAIS;
 }

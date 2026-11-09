@@ -62,9 +62,7 @@ public class EleveService {
         eleve.setEcole(eleveDetails.getEcole());
         eleve.setCommuneNaissance(eleveDetails.getCommuneNaissance());
         eleve.setNomPere(eleveDetails.getNomPere());
-        eleve.setProfessionPere(eleveDetails.getProfessionPere());
         eleve.setNomMere(eleveDetails.getNomMere());
-        eleve.setProfessionMere(eleveDetails.getProfessionMere());
 
         return eleveRepository.save(eleve);
     }
