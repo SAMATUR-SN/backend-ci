@@ -1,6 +1,7 @@
 package sn.samatur.samatur.alerte.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.Operation;
@@ -32,6 +33,7 @@ public class AlerteController {
     }
 
     @PostMapping("/verifier")
+    @PreAuthorize("hasRole('ETAT_CIVIL')")
     @Operation(summary = "Déclencher la vérification des retards")
     public ResponseEntity<String> declencherVerificationManuelle() {
         alerteService.verifierRetardsDossiers();
@@ -39,6 +41,7 @@ public class AlerteController {
     }
 
     @PatchMapping("/{id}/resoudre")
+    @PreAuthorize("hasRole('ETAT_CIVIL')")
     @Operation(summary = "Résoudre une alerte")
     public ResponseEntity<Alerte> resoudreAlerte(@PathVariable Long id) {
         Alerte alerte = alerteRepository.findById(id)
