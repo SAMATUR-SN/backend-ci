@@ -34,7 +34,7 @@ Toutes les routes métier sont sous `/api`, en JSON, avec des champs en camelCas
 | GET | `/api/referentiels/ecoles` | Connecté | `[{id, code, nom, communeId}]` |
 | GET | `/api/referentiels/centres` | Connecté | `[{id, nom}]` |
 | GET | `/api/referentiels/tribunaux` | Connecté | `[{id, nom}]` |
-| POST | `/api/eleves/import` | Rôle ECOLE | fichier CSV en multipart, champ `file` (format revu au bloc 6) |
+| POST | `/api/eleves/import` | Rôle ECOLE | fichier CSV en multipart, champ `file` ; rapport d'import (voir ci-dessous) |
 | GET | `/api/eleves` | Rôle ECOLE ou SUPERVISEUR | liste d'élèves (hors contrat initial) |
 | GET | `/api/eleves/{id}` | Rôle ECOLE ou SUPERVISEUR | un élève (hors contrat initial) |
 | GET | `/api/dossiers` | Connecté | page de résumés de dossiers (voir ci-dessous) |
@@ -82,6 +82,36 @@ Toutes les autres requêtes `/api/**` portent l'en-tête `Authorization: Bearer 
 ```
 
 `dateDerniereEtape` est la date la plus récente parmi celles des étapes franchies.
+
+## Importer des élèves (CSV)
+
+`POST /api/eleves/import` (rôle ECOLE) reçoit un fichier dans le champ multipart `file` : CSV UTF-8, séparateur point-virgule, une ligne d'en-tête, 2 Mo et 1 000 lignes au maximum. Depuis Excel, enregistrer au format **« CSV UTF-8 (délimité par des points-virgules) »** : l'ancien format « CSV » n'est pas en UTF-8 et le fichier est refusé. Les colonnes sont reconnues par leur nom, dans n'importe quel ordre.
+
+| Colonne | Obligatoire | Format |
+|---|---|---|
+| `prenom`, `nom` | oui | texte |
+| `sexe` | oui | `F` ou `M` |
+| `date_naissance` | oui | `JJ/MM/AAAA`, dans le passé |
+| `date_naissance_presumee` | non | `oui` ou `non`, défaut `non` |
+| `commune_naissance` | oui | nom d'une commune du référentiel (`GET /api/referentiels/communes`) |
+| `code_ecole` | oui | code d'une école du référentiel (`GET /api/referentiels/ecoles`) |
+| `classe` | oui | `PRESCOLAIRE`, `CI`, `CP`, `CE1`, `CE2`, `CM1` ou `CM2` |
+| `nom_mere` | oui | texte |
+| `nom_pere` | non | texte |
+| `telephone_parent` | non | `+221` suivi de 9 chiffres |
+| `langue_contact` | non | `FRANCAIS` (défaut), `WOLOF`, `PULAAR` ou `SEREER` |
+| `numero_ine` | non | numéro INE, unique |
+
+L'import est ligne à ligne : une ligne invalide est rejetée avec son numéro (en-tête compris, comme dans Excel) et son motif ; chaque ligne valide crée un élève et son dossier à l'étape `DETECTE`, avec sa référence et sa première ligne d'historique. Une ligne est un doublon si un élève de même prénom, nom, date de naissance et école existe déjà (RG-07).
+
+```json
+{"total": 10, "importes": 8, "rejetes": 2, "erreurs": [
+  {"ligne": 10, "motif": "commune inconnue : Bambeye"},
+  {"ligne": 11, "motif": "doublon : un élève de même prénom, nom, date de naissance et école existe déjà"}
+]}
+```
+
+Un fichier d'exemple est versionné dans `src/test/resources/import-exemple.csv` : Awa, l'élève du scénario de démo, et une ligne volontairement fausse.
 
 ## Faire avancer un dossier
 
