@@ -7,6 +7,7 @@ import sn.samatur.samatur.referentiel.entity.Commune;
 import sn.samatur.samatur.referentiel.entity.Ecole;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "eleve")
@@ -59,4 +60,8 @@ public class Eleve {
     @Enumerated(EnumType.STRING)
     @Column(name = "langue_contact", nullable = false, length = 20)
     private Langue langueContact = Langue.FRANCAIS;
+
+    /** Date d'archivage ; null pour un élève actif. Un élève n'est jamais supprimé (RG-13). */
+    @Column(name = "archive_le")
+    private LocalDateTime archiveLe;
 }
