@@ -18,10 +18,16 @@ pipeline {
         pollSCM('H/2 * * * *')
     }
 
-    // Noms à créer dans : Manage Jenkins > Tools
+    // Nom à créer dans : Manage Jenkins > Tools > JDK installations
+    // (Maven n'est pas nécessaire : on utilise le ./mvnw du projet)
     tools {
-        jdk   'jdk25'   // le pom.xml est en Java 25
-        maven 'maven3'
+        jdk 'jdk25'   // le pom.xml est en Java 25
+    }
+
+    // Premier test : laisser PUSH_AND_DEPLOY décoché (pas de Docker Hub ni de job CD requis)
+    parameters {
+        booleanParam(name: 'PUSH_AND_DEPLOY', defaultValue: false,
+                     description: 'Pousser l\'image sur Docker Hub et déclencher le CD')
     }
 
     environment {
@@ -36,6 +42,8 @@ pipeline {
         DOCKERHUB_CREDS  = 'dockerhub-credentials'    // Username + password (token Docker Hub)
         NVD_CREDS        = 'nvd-api-key'              // Secret text
         // ----------------------------------------------------------------------
+        // Trivy via Docker (même commande que le test sur poste) : il n'est pas installé dans Jenkins
+        TRIVY_CMD        = 'docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v trivy-cache:/root/.cache aquasec/trivy:0.69.3'
         MAVEN_OPTS       = '-Dmaven.repo.local=/var/jenkins_home/.m2/repository'
         REPORTS_DIR      = 'security-reports'
     }
@@ -56,7 +64,7 @@ pipeline {
 
         stage('Build & tests (mvn verify)') {
             steps {
-                sh 'mvn -B clean verify'
+                sh 'chmod +x mvnw && ./mvnw -B clean verify'
             }
             post {
                 always {
@@ -72,7 +80,8 @@ pipeline {
                 // Le fichier dependency-check-suppressions.xml doit exister à la racine du dépôt.
                 withCredentials([string(credentialsId: env.NVD_CREDS, variable: 'NVD_API_KEY')]) {
                     sh '''
-                        mvn -B org.owasp:dependency-check-maven:check \
+                        chmod +x mvnw
+                        ./mvnw -B org.owasp:dependency-check-maven:check \
                           -DnvdApiKey="$NVD_API_KEY" \
                           -Dformat=ALL \
                           -DsuppressionFiles=dependency-check-suppressions.xml \
@@ -96,7 +105,8 @@ pipeline {
             steps {
                 withSonarQubeEnv(env.SONAR_SERVER) {
                     sh """
-                        mvn -B org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
+                        chmod +x mvnw
+                        ./mvnw -B org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
                           -Dsonar.projectKey=${SONAR_PROJECT} \
                           -Dsonar.projectName=${SONAR_PROJECT} \
                           -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
@@ -124,17 +134,19 @@ pipeline {
             steps {
                 // Rapports complets (HIGH + CRITICAL), sans bloquer
                 // --timeout et --scanners vuln : sinon le scan dépasse le délai par défaut (5 min)
+                // Les rapports sont écrits par redirection de la sortie standard
                 sh '''
-                    trivy image --timeout 20m --scanners vuln --skip-version-check \
+                    $TRIVY_CMD image --timeout 20m --scanners vuln --skip-version-check \
                         --severity HIGH,CRITICAL --format table \
-                        --output "$REPORTS_DIR/trivy-report.txt" "$IMAGE_REPO:$IMAGE_TAG"
-                    trivy image --timeout 20m --scanners vuln --skip-version-check \
+                        "$IMAGE_REPO:$IMAGE_TAG" > "$REPORTS_DIR/trivy-report.txt"
+                    $TRIVY_CMD image --timeout 20m --scanners vuln --skip-version-check \
                         --severity HIGH,CRITICAL --format json \
-                        --output "$REPORTS_DIR/trivy-report.json" "$IMAGE_REPO:$IMAGE_TAG"
+                        "$IMAGE_REPO:$IMAGE_TAG" > "$REPORTS_DIR/trivy-report.json"
+                    cat "$REPORTS_DIR/trivy-report.txt"
                 '''
                 // Porte : échec si CRITICAL avec correctif disponible
                 sh '''
-                    trivy image --timeout 20m --scanners vuln --skip-version-check \
+                    $TRIVY_CMD image --timeout 20m --scanners vuln --skip-version-check \
                         --severity CRITICAL --ignore-unfixed --exit-code 1 \
                         --no-progress "$IMAGE_REPO:$IMAGE_TAG"
                 '''
@@ -142,6 +154,7 @@ pipeline {
         }
 
         stage('Push Docker Hub') {
+            when { expression { params.PUSH_AND_DEPLOY } }
             steps {
                 withCredentials([usernamePassword(credentialsId: env.DOCKERHUB_CREDS,
                                                   usernameVariable: 'DH_USER',
@@ -157,6 +170,7 @@ pipeline {
         }
 
         stage('Déclenchement du CD') {
+            when { expression { params.PUSH_AND_DEPLOY } }
             steps {
                 build job: env.CD_JOB,
                       wait: false,
