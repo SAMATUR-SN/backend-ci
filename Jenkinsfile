@@ -33,7 +33,7 @@ pipeline {
     environment {
         // ---- À ADAPTER --------------------------------------------------------
         TESTCONTAINERS_HOST_OVERRIDE = 'host.docker.internal'
-        DOCKERHUB_USER   = 'CHANGEME'                 // compte Docker Hub
+        DOCKERHUB_USER   = 'samatur'                 // compte Docker Hub
         IMAGE_REPO       = "${DOCKERHUB_USER}/samatur-backend"
         SONAR_SERVER     = 'SonarQube'                // Manage Jenkins > System > SonarQube servers
         SONAR_PROJECT    = 'samatur-backend'
