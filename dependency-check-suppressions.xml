@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
+    <suppress>
+        <notes>Faux positif : CVE-2022-31691 concerne Spring Tools 4 pour Eclipse (versions 4.0.0 à 4.16.0) et des extensions VS Code, via SnakeYAML. Le rapport Dependency-Check ne liste que spring_tools pour Eclipse comme logiciel vulnérable, pas spring-boot-devtools. Dépendance en scope runtime et optional, exclue du JAR final par Spring Boot.</notes>
+        <packageUrl regex="true">^pkg:maven/org\.springframework\.boot/spring-boot-devtools@.*$</packageUrl>
+        <cve>CVE-2022-31691</cve>
+    </suppress>
+</suppressions>
