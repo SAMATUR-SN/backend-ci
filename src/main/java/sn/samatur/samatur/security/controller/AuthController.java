@@ -5,6 +5,8 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -38,12 +40,16 @@ public class AuthController {
             description = "Renvoie le jeton à envoyer dans l'en-tête Authorization: Bearer, sa date d'expiration "
                     + "et l'utilisateur. Identifiant inconnu, mauvais mot de passe ou compte désactivé : 401, "
                     + "toujours avec le même message.")
-    public ReponseConnexion connexion(@Valid @RequestBody LoginRequest demande) {
+    public ResponseEntity<ReponseConnexion> connexion(@Valid @RequestBody LoginRequest demande) {
         Authentication authentification = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(demande.getIdentifiant(), demande.getMotDePasse()));
         UserDetailsImpl qui = (UserDetailsImpl) authentification.getPrincipal();
+        if (qui == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
         JwtUtils.JetonEmis jeton = jwtUtils.emettre(qui);
-        return new ReponseConnexion(jeton.jeton(), jeton.expireA(), profils.profil(qui.getUsername()));
+        return ResponseEntity.ok(new ReponseConnexion(
+                jeton.jeton(), jeton.expireA(), profils.profil(qui.getUsername())));
     }
 
     @GetMapping("/moi")
