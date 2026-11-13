@@ -96,7 +96,7 @@ pipeline {
                     // Provisoire : CRITICAL ou HIGH -> build instable (pas rouge).
                     // Après correction de swagger-ui, remplacer par failedTotalCritical: 1
                     dependencyCheckPublisher pattern: "target/dependency-check-report.xml",
-                        unstableTotalCritical: 1,
+                        failedTotalCritical: 1,
                         unstableTotalHigh: 1
                 }
             }
