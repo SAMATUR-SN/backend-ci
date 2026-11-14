@@ -26,7 +26,7 @@ pipeline {
 
     // Premier test : laisser PUSH_AND_DEPLOY décoché (pas de Docker Hub ni de job CD requis)
     parameters {
-        booleanParam(name: 'PUSH_AND_DEPLOY', defaultValue: false,
+        booleanParam(name: 'PUSH_AND_DEPLOY', defaultValue: true,
                      description: 'Pousser l\'image sur Docker Hub et déclencher le CD')
     }
 
