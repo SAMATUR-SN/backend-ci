@@ -224,5 +224,5 @@ Le dossier suit six étapes, identiques dans l'enum `StatutDossier` et dans la c
 
 La migration V3 crée 40 élèves fictifs du département de Bambey, répartis sur les six étapes, dont 5 dossiers en retard (jugement non transcrit depuis plus de 15 jours). Les dates sont relatives au jour du démarrage. Les mots de passe des quatre comptes de démo (`ecole1@samatur.sn`, `etatcivil1@samatur.sn`, `tribunal1@samatur.sn`, `superviseur@samatur.sn`) sont communiqués hors du dépôt.
 
-### Teste déclenchement automatique
+### Teste déclenchement automatique !
 
